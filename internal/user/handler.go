@@ -44,6 +44,30 @@ func (h *Handler) CreateAdmin(w http.ResponseWriter, r *http.Request) {
 	h.CreateUser(w, r)
 }
 
+func (h *Handler) CreateNonAdmin(w http.ResponseWriter, r *http.Request) {
+	err := request.DecodeJSON(w, r, &requestCreate)
+	if err != nil {
+		response.JSON(w, http.StatusBadRequest, response.ResponseBody{
+			Message: "Failed to decode JSON",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	requestCreate.UserType = User
+
+	err = requestCreate.Validate()
+	if err != nil {
+		response.JSON(w, http.StatusBadRequest, response.ResponseBody{
+			Message: "Bad request",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	h.CreateUser(w, r)
+}
+
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	userResp, err := h.service.Create(r.Context(), requestCreate)
 	if errors.Is(err, ErrUserAlreadyExists) {

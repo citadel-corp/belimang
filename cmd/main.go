@@ -72,8 +72,12 @@ func main() {
 	})
 
 	// admin routes
-	ur := v1.PathPrefix("/admin").Subrouter()
-	ur.HandleFunc("/register", userHandler.CreateAdmin).Methods(http.MethodPost)
+	ar := v1.PathPrefix("/admin").Subrouter()
+	ar.HandleFunc("/register", userHandler.CreateAdmin).Methods(http.MethodPost)
+	ar.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
+
+	ur := v1.PathPrefix("/user").Subrouter()
+	ur.HandleFunc("/register", userHandler.CreateNonAdmin).Methods(http.MethodPost)
 	ur.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
 
 	// image routes
