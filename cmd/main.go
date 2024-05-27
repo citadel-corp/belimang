@@ -14,10 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/citadel-corp/go-project-template/internal/common/db"
-	"github.com/citadel-corp/go-project-template/internal/common/middleware"
-	"github.com/citadel-corp/go-project-template/internal/image"
-	"github.com/citadel-corp/go-project-template/internal/user"
+	"github.com/citadel-corp/belimang/internal/common/db"
+	"github.com/citadel-corp/belimang/internal/common/middleware"
+	"github.com/citadel-corp/belimang/internal/image"
+	"github.com/citadel-corp/belimang/internal/user"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -28,16 +28,8 @@ func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	// Connect to database
-	// env := os.Getenv("ENV")
-	// sslMode := "disable"
-	// if env == "production" {
-	// 	sslMode = "verify-full sslrootcert=ap-southeast-1-bundle.pem"
-	// }
-	// connStr := "postgres://[user]:[password]@[neon_hostname]/[dbname]?sslmode=require"
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?%s",
 		os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"), os.Getenv("DB_PARAMS"))
-	// dbURL := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-	// 	os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), sslMode)
 	db, err := db.Connect(connStr)
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("Cannot connect to database: %v", err))
@@ -59,7 +51,7 @@ func main() {
 	// initialize image domain
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("ap-southeast-1"),
-		Credentials: credentials.NewStaticCredentials(os.Getenv("S3_ID"), os.Getenv("S3_SECRET_KEY"), ""),
+		Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
 	})
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("Cannot create AWS session: %v", err))
@@ -79,17 +71,21 @@ func main() {
 		io.WriteString(w, "Service ready")
 	})
 
-	// user routes
+	// admin routes
+	ar := v1.PathPrefix("/admin").Subrouter()
+	ar.HandleFunc("/register", userHandler.CreateAdmin).Methods(http.MethodPost)
+	ar.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
+
 	ur := v1.PathPrefix("/user").Subrouter()
-	ur.HandleFunc("/register", userHandler.CreateUser).Methods(http.MethodPost)
-	ur.HandleFunc("/login", userHandler.Login).Methods(http.MethodPost)
+	ur.HandleFunc("/register", userHandler.CreateNonAdmin).Methods(http.MethodPost)
+	ur.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
 
 	// image routes
 	ir := v1.PathPrefix("/image").Subrouter()
 	ir.HandleFunc("", middleware.Authorized(imageHandler.UploadToS3)).Methods(http.MethodPost)
 
 	httpServer := &http.Server{
-		Addr:    ":8000",
+		Addr:    ":8080",
 		Handler: r,
 	}
 

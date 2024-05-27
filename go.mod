@@ -1,4 +1,4 @@
-module github.com/citadel-corp/go-project-template
+module github.com/citadel-corp/belimang
 
 go 1.22.0
 
@@ -13,6 +13,7 @@ require (
 )
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	golang.org/x/sys v0.18.0 // indirect
@@ -27,7 +28,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect
-	github.com/lmittmann/tint v1.0.4
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/rs/zerolog v1.32.0
 	go.uber.org/atomic v1.7.0 // indirect

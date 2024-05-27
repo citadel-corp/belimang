@@ -65,8 +65,8 @@ details
   - Acknowledge someone/something.
 
 [citadel-corp]: https://github.com/citadel-corp
-[repository]: https://github.com/citadel-corp/go-project-template
-[mit-license]: https://github.com/citadel-corp/go-project-template?tab=MIT-1-ov-file
-[license-file]: https://github.com/citadel-corp/go-project-template/blob/main/LICENSE
+[repository]: https://github.com/citadel-corp/belimang
+[mit-license]: https://github.com/citadel-corp/belimang?tab=MIT-1-ov-file
+[license-file]: https://github.com/citadel-corp/belimang/blob/main/LICENSE
 [test-url]: TBA.
 [documentation-url]: TBA.

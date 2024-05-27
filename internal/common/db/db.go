@@ -21,6 +21,8 @@ type DB struct {
 }
 
 func Connect(dbURL string) (*DB, error) {
+	log.Debug().Msgf("Connecting to %s", dbURL)
+
 	db, err := sql.Open("pgx", dbURL)
 	if err != nil {
 		return nil, err
@@ -31,6 +33,9 @@ func Connect(dbURL string) (*DB, error) {
 	}
 	db.SetMaxIdleConns(25)
 	db.SetMaxOpenConns(25)
+
+	log.Debug().Msgf("Connected to %s", dbURL)
+
 	return &DB{sqlDB: db}, nil
 }
 

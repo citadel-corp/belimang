@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/citadel-corp/go-project-template/internal/common/response"
+	"github.com/citadel-corp/belimang/internal/common/response"
 	"github.com/rs/zerolog/log"
 )
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/citadel-corp/go-project-template/internal/common/response"
+	"github.com/citadel-corp/belimang/internal/common/response"
 )
 
 type Handler struct {
