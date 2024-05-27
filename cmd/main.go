@@ -17,6 +17,7 @@ import (
 	"github.com/citadel-corp/belimang/internal/common/db"
 	"github.com/citadel-corp/belimang/internal/common/middleware"
 	"github.com/citadel-corp/belimang/internal/image"
+	"github.com/citadel-corp/belimang/internal/merchants"
 	"github.com/citadel-corp/belimang/internal/user"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
@@ -48,6 +49,11 @@ func main() {
 	userService := user.NewService(userRepository)
 	userHandler := user.NewHandler(userService)
 
+	// initialize merchants domain
+	merchantRepository := merchants.NewRepository(db)
+	merchantService := merchants.NewService(merchantRepository)
+	merchantHandler := merchants.NewHandler(merchantService)
+
 	// initialize image domain
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("ap-southeast-1"),
@@ -75,6 +81,7 @@ func main() {
 	ar := v1.PathPrefix("/admin").Subrouter()
 	ar.HandleFunc("/register", userHandler.CreateAdmin).Methods(http.MethodPost)
 	ar.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
+	ar.HandleFunc("/merchants", middleware.AuthorizeRole(merchantHandler.Create, string(user.Admin))).Methods(http.MethodPost)
 
 	ur := v1.PathPrefix("/user").Subrouter()
 	ur.HandleFunc("/register", userHandler.CreateNonAdmin).Methods(http.MethodPost)
