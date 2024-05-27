@@ -51,7 +51,7 @@ func main() {
 	// initialize image domain
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("ap-southeast-1"),
-		Credentials: credentials.NewStaticCredentials(os.Getenv("S3_ID"), os.Getenv("S3_SECRET_KEY"), ""),
+		Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
 	})
 	if err != nil {
 		log.Error().Msg(fmt.Sprintf("Cannot create AWS session: %v", err))
@@ -74,6 +74,7 @@ func main() {
 	// admin routes
 	ur := v1.PathPrefix("/admin").Subrouter()
 	ur.HandleFunc("/register", userHandler.CreateAdmin).Methods(http.MethodPost)
+	ur.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
 
 	// image routes
 	ir := v1.PathPrefix("/image").Subrouter()

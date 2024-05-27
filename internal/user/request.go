@@ -28,7 +28,7 @@ type LoginPayload struct {
 
 func (p LoginPayload) Validate() error {
 	return validation.ValidateStruct(&p,
-		validation.Field(&p.Username, validation.Required, validation.Length(5, 15)),
-		validation.Field(&p.Password, validation.Required, validation.Length(5, 15)),
+		validation.Field(&p.Username, validation.Required, validation.Length(MinUsername, MaxUsername)),
+		validation.Field(&p.Password, validation.Required, validation.Length(MinPassword, MaxPassword)),
 	)
 }

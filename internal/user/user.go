@@ -1,5 +1,7 @@
 package user
 
+import "time"
+
 var (
 	MinUsername = 5
 	MaxUsername = 30
@@ -24,4 +26,5 @@ type Users struct {
 	Email          string
 	HashedPassword string
 	UserType       UserType
+	CreatedAt      time.Time
 }

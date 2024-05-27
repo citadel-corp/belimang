@@ -41,14 +41,12 @@ func Sign(ttl time.Duration, subject, role string) (string, error) {
 }
 
 func VerifyAndGetSubject(tokenString string) (*UserClaims, error) {
-	mySigningKey := []byte("secret")
-
 	// Parse the token
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return mySigningKey, nil
+		return key, nil
 	})
 	if err != nil {
 		return nil, err
