@@ -83,9 +83,10 @@ func main() {
 	ar.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
 	ar.HandleFunc("/merchants", middleware.AuthorizeRole(merchantHandler.Create, string(user.Admin))).Methods(http.MethodPost)
 
-	ur := v1.PathPrefix("/user").Subrouter()
+	ur := v1.PathPrefix("/users").Subrouter()
 	ur.HandleFunc("/register", userHandler.CreateNonAdmin).Methods(http.MethodPost)
 	ur.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
+	ur.HandleFunc("/estimate", middleware.AuthorizeRole(userHandler.LoginUser, string(user.User))).Methods(http.MethodPost)
 
 	// image routes
 	ir := v1.PathPrefix("/image").Subrouter()
