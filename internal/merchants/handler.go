@@ -5,6 +5,7 @@ import (
 
 	"github.com/citadel-corp/belimang/internal/common/request"
 	"github.com/citadel-corp/belimang/internal/common/response"
+	"github.com/gorilla/schema"
 )
 
 type Handler struct {
@@ -47,5 +48,39 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusCreated, response.ResponseBody{
 		Message: "Merchant created successfully",
 		Data:    userResp,
+	})
+}
+
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	var req ListMerchantsPayload
+
+	newSchema := schema.NewDecoder()
+	newSchema.IgnoreUnknownKeys(true)
+
+	if err := newSchema.Decode(&req, r.URL.Query()); err != nil {
+		response.JSON(w, http.StatusBadRequest, response.ResponseBody{})
+		return
+	}
+
+	err := req.Validate()
+	if err != nil {
+		response.JSON(w, http.StatusBadRequest, response.ResponseBody{
+			Message: "Bad request",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	merchantsResp, err := h.service.List(r.Context(), req)
+	if err != nil {
+		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{
+			Message: "Internal server error",
+			Error:   err.Error(),
+		})
+		return
+	}
+	response.JSON(w, http.StatusCreated, response.ResponseBody{
+		Message: "Merchants fetched successfully",
+		Data:    merchantsResp,
 	})
 }

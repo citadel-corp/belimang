@@ -8,6 +8,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/gorilla/mux v1.8.1
+	github.com/gorilla/schema v1.3.0
 	github.com/jackc/pgx/v5 v5.5.5
 	golang.org/x/crypto v0.21.0
 )

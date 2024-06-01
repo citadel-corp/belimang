@@ -43,3 +43,21 @@ func (p Location) Validate() error {
 
 	return nil
 }
+
+type ListMerchantsPayload struct {
+	MerchantUID      string `schema:"merchantId" binding:"omitempty"`
+	Name             string `schema:"name" binding:"omitempty"`
+	MerchantCategory string `schema:"merchantCategory"`
+	CreatedAtSort    string `schema:"createdAt" binding:"omitempty"`
+	Limit            int    `schema:"limit" binding:"omitempty"`
+	Offset           int    `schema:"offset" binding:"omitempty"`
+}
+
+func (p ListMerchantsPayload) Validate() error {
+	return validation.ValidateStruct(&p,
+		validation.Field(&p.MerchantUID),
+		validation.Field(&p.Name),
+		validation.Field(&p.MerchantCategory, validation.In(MerchantCategories...)),
+		validation.Field(&p.CreatedAtSort, validation.In([]interface{}{"asc", "desc"}...)),
+	)
+}
