@@ -3,6 +3,7 @@ package merchants
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/citadel-corp/belimang/internal/common/db"
 )
@@ -10,6 +11,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, merchant *Merchants) (err error)
 	ListByUIDs(ctx context.Context, ids []string) ([]*Merchants, error)
+	List(ctx context.Context, filter ListMerchantsPayload) (merchants []Merchants, err error)
 }
 
 type dbRepository struct {
@@ -66,4 +68,66 @@ func (d *dbRepository) ListByUIDs(ctx context.Context, ids []string) ([]*Merchan
 		res = append(res, m)
 	}
 	return res, nil
+}
+
+func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (merchants []Merchants, err error) {
+	merchants = make([]Merchants, 0)
+
+	q := `
+		SELECT m.uid, m.name, m.merchant_category, m.image_url, m.location_lat, m.location_lng, m.created_at
+		FROM merchants m 
+	`
+
+	paramNo := 1
+	params := make([]interface{}, 0)
+	if filter.MerchantUID != "" {
+		q += fmt.Sprintf("WHERE m.uid = $%d ", paramNo)
+		paramNo += 1
+		params = append(params, filter.MerchantUID)
+	}
+	if filter.Name != "" {
+		q += whereOrAnd(paramNo)
+		q += fmt.Sprintf("LOWER(m.name) LIKE $%d ", paramNo)
+		paramNo += 1
+		params = append(params, "%"+strings.ToLower(filter.Name)+"%")
+	}
+	if filter.MerchantCategory != "" {
+		q += whereOrAnd(paramNo)
+		q += fmt.Sprintf("m.merchant_category = $%d ", paramNo)
+		paramNo += 1
+		params = append(params, filter.MerchantCategory)
+	}
+
+	orderBy := "desc"
+	if filter.CreatedAtSort == "asc" {
+		orderBy = "asc"
+	}
+
+	q += fmt.Sprintf(" ORDER BY m.created_at %s", orderBy)
+
+	q += fmt.Sprintf(" OFFSET $%d LIMIT $%d", paramNo, paramNo+1)
+	params = append(params, filter.Offset)
+	params = append(params, filter.Limit)
+
+	rows, err := d.db.DB().QueryContext(ctx, q, params...)
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		m := Merchants{}
+		err = rows.Scan(&m.UID, &m.Name, &m.Category, &m.ImageURL, &m.Lat, &m.Lng, &m.CreatedAt)
+		if err != nil {
+			return
+		}
+		merchants = append(merchants, m)
+	}
+	return
+}
+
+func whereOrAnd(paramNo int) string {
+	if paramNo == 1 {
+		return "WHERE "
+	}
+	return "OR "
 }
