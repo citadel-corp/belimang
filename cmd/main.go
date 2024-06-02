@@ -90,6 +90,7 @@ func main() {
 	ar.HandleFunc("/merchants", middleware.AuthorizeRole(merchantHandler.Create, string(user.Admin))).Methods(http.MethodPost)
 	ar.HandleFunc("/merchants", middleware.AuthorizeRole(merchantHandler.List, string(user.Admin))).Methods(http.MethodGet)
 	ar.HandleFunc("/merchants/{merchantId}/items", middleware.AuthorizeRole(merchantItemHandler.Create, string(user.Admin))).Methods(http.MethodPost)
+	ar.HandleFunc("/merchants/{merchantId}/items", middleware.AuthorizeRole(merchantItemHandler.List, string(user.Admin))).Methods(http.MethodGet)
 
 	ur := v1.PathPrefix("/users").Subrouter()
 	ur.HandleFunc("/register", userHandler.CreateNonAdmin).Methods(http.MethodPost)
