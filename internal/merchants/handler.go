@@ -79,7 +79,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	response.JSON(w, http.StatusCreated, response.ResponseBody{
+	response.JSON(w, http.StatusOK, response.ResponseBody{
 		Message: "Merchants fetched successfully",
 		Data:    merchantsResp,
 	})

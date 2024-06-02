@@ -45,12 +45,12 @@ func (p Location) Validate() error {
 }
 
 type ListMerchantsPayload struct {
-	MerchantUID      string `schema:"merchantId" binding:"omitempty"`
-	Name             string `schema:"name" binding:"omitempty"`
-	MerchantCategory string `schema:"merchantCategory"`
-	CreatedAtSort    string `schema:"createdAt" binding:"omitempty"`
-	Limit            int    `schema:"limit" binding:"omitempty"`
-	Offset           int    `schema:"offset" binding:"omitempty"`
+	MerchantUID      string           `schema:"merchantId" binding:"omitempty"`
+	Name             string           `schema:"name" binding:"omitempty"`
+	MerchantCategory MerchantCategory `schema:"merchantCategory"`
+	CreatedAtSort    string           `schema:"createdAt" binding:"omitempty"`
+	Limit            int              `schema:"limit" binding:"omitempty"`
+	Offset           int              `schema:"offset" binding:"omitempty"`
 }
 
 func (p ListMerchantsPayload) Validate() error {

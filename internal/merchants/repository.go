@@ -3,6 +3,7 @@ package merchants
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/citadel-corp/belimang/internal/common/db"
 )
@@ -88,7 +89,7 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (m
 		q += whereOrAnd(paramNo)
 		q += fmt.Sprintf("LOWER(m.name) LIKE $%d ", paramNo)
 		paramNo += 1
-		params = append(params, "%"+filter.Name+"%")
+		params = append(params, "%"+strings.ToLower(filter.Name)+"%")
 	}
 	if filter.MerchantCategory != "" {
 		q += whereOrAnd(paramNo)
@@ -97,16 +98,16 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (m
 		params = append(params, filter.MerchantCategory)
 	}
 
-	q += fmt.Sprintf(" OFFSET $%d LIMIT $%d", paramNo, paramNo+1)
-	params = append(params, filter.Offset)
-	params = append(params, filter.Limit)
-
 	orderBy := "desc"
 	if filter.CreatedAtSort == "asc" {
 		orderBy = "asc"
 	}
 
 	q += fmt.Sprintf(" ORDER BY m.created_at %s", orderBy)
+
+	q += fmt.Sprintf(" OFFSET $%d LIMIT $%d", paramNo, paramNo+1)
+	params = append(params, filter.Offset)
+	params = append(params, filter.Limit)
 
 	rows, err := d.db.DB().QueryContext(ctx, q, params...)
 	if err != nil {
