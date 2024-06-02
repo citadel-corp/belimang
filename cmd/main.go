@@ -17,6 +17,7 @@ import (
 	"github.com/citadel-corp/belimang/internal/common/db"
 	"github.com/citadel-corp/belimang/internal/common/middleware"
 	"github.com/citadel-corp/belimang/internal/image"
+	merchantitems "github.com/citadel-corp/belimang/internal/merchant_items"
 	"github.com/citadel-corp/belimang/internal/merchants"
 	"github.com/citadel-corp/belimang/internal/user"
 	"github.com/gorilla/mux"
@@ -54,6 +55,11 @@ func main() {
 	merchantService := merchants.NewService(merchantRepository)
 	merchantHandler := merchants.NewHandler(merchantService)
 
+	// initialize merchant items domain
+	merchantItemRepository := merchantitems.NewRepository(db)
+	merchantItemService := merchantitems.NewService(merchantItemRepository, merchantRepository)
+	merchantItemHandler := merchantitems.NewHandler(merchantItemService)
+
 	// initialize image domain
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("ap-southeast-1"),
@@ -83,6 +89,7 @@ func main() {
 	ar.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
 	ar.HandleFunc("/merchants", middleware.AuthorizeRole(merchantHandler.Create, string(user.Admin))).Methods(http.MethodPost)
 	ar.HandleFunc("/merchants", middleware.AuthorizeRole(merchantHandler.List, string(user.Admin))).Methods(http.MethodGet)
+	ar.HandleFunc("/merchants/{merchantId}/items", middleware.AuthorizeRole(merchantItemHandler.Create, string(user.Admin))).Methods(http.MethodPost)
 
 	ur := v1.PathPrefix("/users").Subrouter()
 	ur.HandleFunc("/register", userHandler.CreateNonAdmin).Methods(http.MethodPost)

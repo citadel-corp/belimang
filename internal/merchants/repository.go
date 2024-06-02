@@ -2,6 +2,7 @@ package merchants
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -12,6 +13,7 @@ type Repository interface {
 	Create(ctx context.Context, merchant *Merchants) (err error)
 	ListByUIDs(ctx context.Context, ids []string) ([]*Merchants, error)
 	List(ctx context.Context, filter ListMerchantsPayload) (merchants []Merchants, err error)
+	GetByUID(ctx context.Context, uid string) (merchant *Merchants, err error)
 }
 
 type dbRepository struct {
@@ -122,6 +124,28 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (m
 		}
 		merchants = append(merchants, m)
 	}
+	return
+}
+
+func (d *dbRepository) GetByUID(ctx context.Context, uid string) (merchant *Merchants, err error) {
+	getMerchantQuery := `
+		SELECT id, uid, name, merchant_category, image_url, location_lat, location_lng, created_at
+		FROM merchants
+		WHERE uid = $1
+	`
+
+	row := d.db.DB().QueryRowContext(ctx, getMerchantQuery, uid)
+	m := Merchants{}
+	err = row.Scan(&m.ID, &m.UID, &m.Name, &m.Category, &m.ImageURL, &m.Lat, &m.Lng, &m.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrMerchantNotFound
+		}
+		return
+	}
+
+	merchant = &m
+
 	return
 }
 
