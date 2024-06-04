@@ -50,3 +50,13 @@ func (p OrderItemRequest) Validate() error {
 		validation.Field(&p.Quantity, validation.Required),
 	)
 }
+
+type CreateOrderRequest struct {
+	CalculatedEstimateID string `json:"calculatedEstimateId"`
+}
+
+func (p CreateOrderRequest) Validate() error {
+	return validation.ValidateStruct(&p,
+		validation.Field(&p.CalculatedEstimateID, validation.Required),
+	)
+}

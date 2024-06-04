@@ -7,22 +7,26 @@ import (
 
 	"github.com/LucaTheHacker/go-haversine"
 	"github.com/citadel-corp/belimang/internal/common/id"
+	merchantitems "github.com/citadel-corp/belimang/internal/merchant_items"
 	"github.com/citadel-corp/belimang/internal/merchants"
 )
 
 type Service interface {
 	CalculateEstimate(ctx context.Context, req CalculateOrderEstimateRequest, userID string) (*CalculateOrderEstimateResponse, error)
+	CreateOrder(ctx context.Context, req CreateOrderRequest, userID string) (*CreateOrderResponse, error)
 }
 
 type orderService struct {
-	repository         Repository
-	merchantRepository merchants.Repository
+	repository              Repository
+	merchantRepository      merchants.Repository
+	merchantItemsRepository merchantitems.Repository
 }
 
-func NewService(repository Repository, merchantRepository merchants.Repository) Service {
+func NewService(repository Repository, merchantRepository merchants.Repository, merchantItemsRepository merchantitems.Repository) Service {
 	return &orderService{
-		repository:         repository,
-		merchantRepository: merchantRepository,
+		repository:              repository,
+		merchantRepository:      merchantRepository,
+		merchantItemsRepository: merchantItemsRepository,
 	}
 }
 
@@ -89,6 +93,31 @@ func (s *orderService) CalculateEstimate(ctx context.Context, req CalculateOrder
 		TotalPrice:                     0,
 		EstimatedDeliveryTimeInMinutes: deliveryTime,
 		CalculatedEstimateID:           calculatedEstimate.ID,
+	}, nil
+}
+
+// CreateOrder implements Service.
+func (s *orderService) CreateOrder(ctx context.Context, req CreateOrderRequest, userID string) (*CreateOrderResponse, error) {
+	err := req.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrValidationFailed, err)
+	}
+	calculatedEstimate, err := s.repository.GetCalculatedEstimate(ctx, req.CalculatedEstimateID)
+	if err != nil {
+		return nil, err
+	}
+	order := &Order{
+		ID:                   id.GenerateStringID(16),
+		CalculatedEstimateID: calculatedEstimate.ID,
+		UserID:               userID,
+	}
+	err = s.repository.InsertOrder(ctx, order)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CreateOrderResponse{
+		OrderID: order.ID,
 	}, nil
 }
 
