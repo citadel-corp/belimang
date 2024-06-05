@@ -13,5 +13,5 @@ type OrderItem struct {
 	ID         string
 	OrderID    string
 	MerchantID string
-	ItemIDs    []string
+	Items      Items
 }

@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, item *MerchantItems) (err error)
 	List(ctx context.Context, filter ListMerchantItemsPayload) (items []MerchantItems, err error)
+	ListByUIDs(ctx context.Context, uids []string) ([]*MerchantItems, error)
 }
 
 type dbRepository struct {
@@ -41,7 +42,7 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantItemsPayload
 
 	q := `
 		SELECT mi.uid, mi.name, mi.merchant_id, mi.item_category, mi.price, mi.image_url, mi.created_at
-		FROM merchant_items mi 
+		FROM merchant_items mi
 	`
 
 	paramNo := 1
@@ -97,6 +98,43 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantItemsPayload
 		items = append(items, m)
 	}
 	return
+}
+
+// ListByUID implements Repository.
+func (d *dbRepository) ListByUIDs(ctx context.Context, uids []string) ([]*MerchantItems, error) {
+	if len(uids) == 0 {
+		return make([]*MerchantItems, 0), nil
+	}
+	q := `
+		SELECT mi.uid, mi.name, mi.merchant_id, mi.item_category, mi.price, mi.image_url, mi.created_at
+		FROM merchant_items mi
+		WHERE mi.uid IN(
+	`
+
+	for i, v := range uids {
+		if i > 0 {
+			q += ","
+		}
+		q += fmt.Sprintf("'%s'", v)
+
+	}
+
+	q += ");"
+	rows, err := d.db.DB().QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	res := make([]*MerchantItems, 0)
+	for rows.Next() {
+		m := &MerchantItems{}
+		err = rows.Scan(&m.UID, &m.Name, &m.MerchantID, &m.Category, &m.Price, &m.ImageURL, &m.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, m)
+	}
+	return res, nil
 }
 
 func whereOrAnd(paramNo int) string {
