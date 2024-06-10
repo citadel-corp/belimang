@@ -28,14 +28,14 @@ func (p UserLocationRequest) Validate() error {
 
 type OrderRequest struct {
 	MerchantID      string             `json:"merchantId"`
-	IsStartingPoint bool               `json:"isStartingPoint"`
+	IsStartingPoint *bool              `json:"isStartingPoint"`
 	Items           []OrderItemRequest `json:"items"`
 }
 
 func (p OrderRequest) Validate() error {
 	return validation.ValidateStruct(&p,
 		validation.Field(&p.MerchantID, validation.Required),
-		validation.Field(&p.IsStartingPoint, validation.Required),
+		validation.Field(&p.IsStartingPoint, validation.NotNil),
 	)
 }
 

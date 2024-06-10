@@ -44,6 +44,20 @@ func (h *Handler) CalculateEstimate(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	if errors.Is(err, ErrSomeMerchantNotFound) {
+		response.JSON(w, http.StatusNotFound, response.ResponseBody{
+			Message: "Not found",
+			Error:   err.Error(),
+		})
+		return
+	}
+	if errors.Is(err, ErrSomeItemNotFound) {
+		response.JSON(w, http.StatusNotFound, response.ResponseBody{
+			Message: "Not found",
+			Error:   err.Error(),
+		})
+		return
+	}
 	if err != nil {
 		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{
 			Message: "Internal server error",

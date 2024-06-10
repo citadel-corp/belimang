@@ -43,7 +43,7 @@ func (s *orderService) CalculateEstimate(ctx context.Context, req CalculateOrder
 	allItems := make([]OrderItemRequest, 0)
 	calculateEstimateItems := make(Items, 0)
 	for i, order := range req.Orders {
-		if order.IsStartingPoint {
+		if *order.IsStartingPoint {
 			startingPointCount += 1
 			startingMerchantID = order.MerchantID
 		}
