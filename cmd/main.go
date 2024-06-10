@@ -89,6 +89,9 @@ func main() {
 		io.WriteString(w, "Service ready")
 	})
 
+	//
+	v1.HandleFunc("/merchants/{lat},{long}", middleware.AuthorizeRole(merchantHandler.ListByDistance, string(user.User))).Methods(http.MethodGet)
+
 	// admin routes
 	ar := v1.PathPrefix("/admin").Subrouter()
 	ar.HandleFunc("/register", userHandler.CreateAdmin).Methods(http.MethodPost)
