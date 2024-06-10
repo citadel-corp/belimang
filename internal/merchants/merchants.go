@@ -37,3 +37,15 @@ type Merchants struct {
 	Lng       float64
 	CreatedAt time.Time
 }
+
+type MerchantsWithItem struct {
+	ID        uint64
+	UID       string
+	Name      string
+	Category  MerchantCategory
+	ImageURL  string
+	Lat       float64
+	Lng       float64
+	CreatedAt time.Time
+	Item      MerchantItems
+}
