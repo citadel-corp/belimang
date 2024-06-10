@@ -9,6 +9,7 @@ import (
 type Service interface {
 	Create(ctx context.Context, req CreateMerchantPayload) (*MerchantUIDResponse, error)
 	List(ctx context.Context, req ListMerchantsPayload) ([]MerchantsResponse, error)
+	ListByDistance(ctx context.Context, req ListMerchantsByDistancePayload) ([]MerchantWithItemsResponse, error)
 }
 
 type merchantService struct {
@@ -49,4 +50,17 @@ func (s *merchantService) List(ctx context.Context, req ListMerchantsPayload) ([
 	}
 
 	return CreateMerchantsResponse(merchants), nil
+}
+
+func (s *merchantService) ListByDistance(ctx context.Context, req ListMerchantsByDistancePayload) ([]MerchantWithItemsResponse, error) {
+	if req.Limit == 0 {
+		req.Limit = 5
+	}
+
+	merchantsWithItem, err := s.repository.ListByDistance(ctx, req)
+	if err != nil {
+		return []MerchantWithItemsResponse{}, err
+	}
+
+	return CreateMerchantsWithItemsResponse(merchantsWithItem), nil
 }
