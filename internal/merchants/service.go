@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/citadel-corp/belimang/internal/common/id"
+	"github.com/citadel-corp/belimang/internal/common/response"
 )
 
 type Service interface {
 	Create(ctx context.Context, req CreateMerchantPayload) (*MerchantUIDResponse, error)
-	List(ctx context.Context, req ListMerchantsPayload) ([]MerchantsResponse, error)
-	ListByDistance(ctx context.Context, req ListMerchantsByDistancePayload) ([]MerchantWithItemsResponse, error)
+	List(ctx context.Context, req ListMerchantsPayload) ([]MerchantsResponse, *response.Pagination, error)
+	ListByDistance(ctx context.Context, req ListMerchantsByDistancePayload) ([]MerchantWithItemsResponse, *response.Pagination, error)
 }
 
 type merchantService struct {
@@ -39,28 +40,28 @@ func (s *merchantService) Create(ctx context.Context, req CreateMerchantPayload)
 	}, nil
 }
 
-func (s *merchantService) List(ctx context.Context, req ListMerchantsPayload) ([]MerchantsResponse, error) {
+func (s *merchantService) List(ctx context.Context, req ListMerchantsPayload) ([]MerchantsResponse, *response.Pagination, error) {
 	if req.Limit == 0 {
 		req.Limit = 5
 	}
 
-	merchants, err := s.repository.List(ctx, req)
+	merchants, pagination, err := s.repository.List(ctx, req)
 	if err != nil {
-		return []MerchantsResponse{}, err
+		return []MerchantsResponse{}, nil, err
 	}
 
-	return CreateMerchantsResponse(merchants), nil
+	return CreateMerchantsResponse(merchants), pagination, nil
 }
 
-func (s *merchantService) ListByDistance(ctx context.Context, req ListMerchantsByDistancePayload) ([]MerchantWithItemsResponse, error) {
+func (s *merchantService) ListByDistance(ctx context.Context, req ListMerchantsByDistancePayload) ([]MerchantWithItemsResponse, *response.Pagination, error) {
 	if req.Limit == 0 {
 		req.Limit = 5
 	}
 
-	merchantsWithItem, err := s.repository.ListByDistance(ctx, req)
+	merchantsWithItem, pagination, err := s.repository.ListByDistance(ctx, req)
 	if err != nil {
-		return []MerchantWithItemsResponse{}, err
+		return []MerchantWithItemsResponse{}, nil, err
 	}
 
-	return CreateMerchantsWithItemsResponse(merchantsWithItem), nil
+	return CreateMerchantsWithItemsResponse(merchantsWithItem), pagination, nil
 }

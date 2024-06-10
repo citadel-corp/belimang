@@ -69,7 +69,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	merchantsResp, err := h.service.List(r.Context(), req)
+	merchantsResp, pagination, err := h.service.List(r.Context(), req)
 	if err != nil {
 		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{
 			Message: "Internal server error",
@@ -80,6 +80,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, response.ResponseBody{
 		Message: "Merchants fetched successfully",
 		Data:    merchantsResp,
+		Meta:    pagination,
 	})
 }
 
@@ -106,7 +107,7 @@ func (h *Handler) ListByDistance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	merchantsResp, err := h.service.ListByDistance(r.Context(), req)
+	merchantsResp, pagination, err := h.service.ListByDistance(r.Context(), req)
 	if err != nil {
 		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{
 			Message: "Internal server error",
@@ -117,5 +118,6 @@ func (h *Handler) ListByDistance(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, response.ResponseBody{
 		Message: "Merchants fetched successfully",
 		Data:    merchantsResp,
+		Meta:    pagination,
 	})
 }

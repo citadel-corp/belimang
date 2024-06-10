@@ -7,14 +7,15 @@ import (
 	"strings"
 
 	"github.com/citadel-corp/belimang/internal/common/db"
+	"github.com/citadel-corp/belimang/internal/common/response"
 )
 
 type Repository interface {
 	Create(ctx context.Context, merchant *Merchants) (err error)
 	ListByUIDs(ctx context.Context, ids []string) ([]*Merchants, error)
-	List(ctx context.Context, filter ListMerchantsPayload) (merchants []Merchants, err error)
+	List(ctx context.Context, filter ListMerchantsPayload) (merchants []Merchants, pagination *response.Pagination, err error)
 	GetByUID(ctx context.Context, uid string) (merchant *Merchants, err error)
-	ListByDistance(ctx context.Context, filter ListMerchantsByDistancePayload) (merchantWithItem []MerchantsWithItem, err error)
+	ListByDistance(ctx context.Context, filter ListMerchantsByDistancePayload) (merchantWithItem []MerchantsWithItem, pagination *response.Pagination, err error)
 }
 
 type dbRepository struct {
@@ -73,11 +74,11 @@ func (d *dbRepository) ListByUIDs(ctx context.Context, ids []string) ([]*Merchan
 	return res, nil
 }
 
-func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (merchants []Merchants, err error) {
+func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (merchants []Merchants, pagination *response.Pagination, err error) {
 	merchants = make([]Merchants, 0)
 
 	q := `
-		SELECT m.uid, m.name, m.merchant_category, m.image_url, m.location_lat, m.location_lng, m.created_at
+		SELECT COUNT(*) OVER() AS total_count, m.uid, m.name, m.merchant_category, m.image_url, m.location_lat, m.location_lng, m.created_at
 		FROM merchants m 
 	`
 
@@ -117,9 +118,13 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (m
 		return
 	}
 
+	pagination = &response.Pagination{}
+	pagination.Limit = filter.Limit
+	pagination.Offset = filter.Offset
+
 	for rows.Next() {
 		m := Merchants{}
-		err = rows.Scan(&m.UID, &m.Name, &m.Category, &m.ImageURL, &m.Lat, &m.Lng, &m.CreatedAt)
+		err = rows.Scan(&pagination.Total, &m.UID, &m.Name, &m.Category, &m.ImageURL, &m.Lat, &m.Lng, &m.CreatedAt)
 		if err != nil {
 			return
 		}
@@ -128,11 +133,12 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (m
 	return
 }
 
-func (d *dbRepository) ListByDistance(ctx context.Context, filter ListMerchantsByDistancePayload) (merchantWithItem []MerchantsWithItem, err error) {
+func (d *dbRepository) ListByDistance(ctx context.Context, filter ListMerchantsByDistancePayload) (merchantWithItem []MerchantsWithItem, pagination *response.Pagination, err error) {
 	merchantWithItem = make([]MerchantsWithItem, 0)
 
 	q := `
-		SELECT m.*, 
+		SELECT COUNT(*) OVER() AS total_count,
+		m.*, 
 		COALESCE(mi.uid, ''), 
 		COALESCE(mi.name, ''), 
 		COALESCE(mi.merchant_id, 0), 
@@ -184,11 +190,15 @@ func (d *dbRepository) ListByDistance(ctx context.Context, filter ListMerchantsB
 		return
 	}
 
+	pagination = &response.Pagination{}
+	pagination.Limit = filter.Limit
+	pagination.Offset = filter.Offset
+
 	for rows.Next() {
 		m := Merchants{}
 		mi := MerchantItems{}
 		var distance float64
-		err = rows.Scan(&distance, &m.ID, &m.UID, &m.Name, &m.Category, &m.ImageURL, &m.Lat, &m.Lng, &m.CreatedAt,
+		err = rows.Scan(&pagination.Total, &distance, &m.ID, &m.UID, &m.Name, &m.Category, &m.ImageURL, &m.Lat, &m.Lng, &m.CreatedAt,
 			&mi.UID, &mi.Name, &mi.MerchantID, &mi.Category, &mi.Price, &mi.ImageURL, &mi.CreatedAt)
 		if err != nil {
 			return
