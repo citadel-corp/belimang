@@ -88,10 +88,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request, requestCrea
 		})
 		return
 	}
-	response.JSON(w, http.StatusCreated, response.ResponseBody{
-		Message: "User registered successfully",
-		Data:    userResp,
-	})
+	response.JSON(w, http.StatusCreated, userResp)
 }
 
 func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -137,8 +134,5 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	response.JSON(w, http.StatusOK, response.ResponseBody{
-		Message: "User logged in successfully",
-		Data:    userResp,
-	})
+	response.JSON(w, http.StatusOK, userResp)
 }

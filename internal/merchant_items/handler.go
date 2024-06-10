@@ -56,10 +56,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	response.JSON(w, http.StatusCreated, response.ResponseBody{
-		Message: "Merchant item created successfully",
-		Data:    itemResp,
-	})
+	response.JSON(w, http.StatusCreated, itemResp)
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {

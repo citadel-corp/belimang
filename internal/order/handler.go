@@ -51,10 +51,7 @@ func (h *Handler) CalculateEstimate(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	response.JSON(w, http.StatusOK, response.ResponseBody{
-		Message: "success",
-		Data:    res,
-	})
+	response.JSON(w, http.StatusOK, res)
 }
 
 func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
@@ -96,10 +93,7 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	response.JSON(w, http.StatusCreated, response.ResponseBody{
-		Message: "success",
-		Data:    res,
-	})
+	response.JSON(w, http.StatusCreated, res)
 }
 
 func (h *Handler) SearchOrders(w http.ResponseWriter, r *http.Request) {
@@ -127,10 +121,7 @@ func (h *Handler) SearchOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, response.ResponseBody{
-		Message: "Orders fetched successfully",
-		Data:    orders,
-	})
+	response.JSON(w, http.StatusOK, orders)
 }
 
 func getUserID(r *http.Request) (string, error) {
