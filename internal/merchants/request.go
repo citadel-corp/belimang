@@ -3,6 +3,7 @@ package merchants
 import (
 	validations "github.com/citadel-corp/belimang/internal/common/validation"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
 type Location struct {
@@ -59,5 +60,25 @@ func (p ListMerchantsPayload) Validate() error {
 		validation.Field(&p.Name),
 		validation.Field(&p.MerchantCategory, validation.In(MerchantCategories...)),
 		validation.Field(&p.CreatedAtSort, validation.In([]interface{}{"asc", "desc"}...)),
+	)
+}
+
+type ListMerchantsByDistancePayload struct {
+	MerchantUID      string           `schema:"merchantId" binding:"omitempty"`
+	Name             string           `schema:"name" binding:"omitempty"`
+	MerchantCategory MerchantCategory `schema:"merchantCategory"`
+	Lat              string
+	Lng              string
+	Limit            int `schema:"limit" binding:"omitempty"`
+	Offset           int `schema:"offset" binding:"omitempty"`
+}
+
+func (p ListMerchantsByDistancePayload) Validate() error {
+	return validation.ValidateStruct(&p,
+		validation.Field(&p.MerchantUID),
+		validation.Field(&p.Name),
+		validation.Field(&p.MerchantCategory, validation.In(MerchantCategories...)),
+		validation.Field(&p.Lat, validation.Required, is.Latitude),
+		validation.Field(&p.Lng, validation.Required, is.Longitude),
 	)
 }
