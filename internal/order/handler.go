@@ -7,6 +7,7 @@ import (
 	"github.com/citadel-corp/belimang/internal/common/middleware"
 	"github.com/citadel-corp/belimang/internal/common/request"
 	"github.com/citadel-corp/belimang/internal/common/response"
+	"github.com/gorilla/schema"
 )
 
 type Handler struct {
@@ -97,6 +98,37 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusCreated, response.ResponseBody{
 		Message: "success",
 		Data:    res,
+	})
+}
+
+func (h *Handler) ListOrderProduct(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{})
+		return
+	}
+	var req SearchOrderPayload
+
+	newSchema := schema.NewDecoder()
+	newSchema.IgnoreUnknownKeys(true)
+
+	if err := newSchema.Decode(&req, r.URL.Query()); err != nil {
+		response.JSON(w, http.StatusBadRequest, response.ResponseBody{})
+		return
+	}
+
+	orders, err := h.service.SearchOrder(r.Context(), req, userID)
+	if err != nil {
+		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{
+			Message: "Internal server error",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	response.JSON(w, http.StatusOK, response.ResponseBody{
+		Message: "Orders fetched successfully",
+		Data:    orders,
 	})
 }
 

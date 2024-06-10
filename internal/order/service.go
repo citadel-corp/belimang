@@ -14,6 +14,7 @@ import (
 type Service interface {
 	CalculateEstimate(ctx context.Context, req CalculateOrderEstimateRequest, userID string) (*CalculateOrderEstimateResponse, error)
 	CreateOrder(ctx context.Context, req CreateOrderRequest, userID string) (*CreateOrderResponse, error)
+	SearchOrder(ctx context.Context, req SearchOrderPayload, userID string) ([]*SearchOrderResponse, error)
 }
 
 type orderService struct {
@@ -156,6 +157,80 @@ func (s *orderService) CreateOrder(ctx context.Context, req CreateOrderRequest, 
 	return &CreateOrderResponse{
 		OrderID: order.ID,
 	}, nil
+}
+
+// SearchOrder implements Service.
+func (s *orderService) SearchOrder(ctx context.Context, req SearchOrderPayload, userID string) ([]*SearchOrderResponse, error) {
+	orderItemMerchants, err := s.repository.SearchOrderItemMerchants(ctx, req, userID)
+	if err != nil {
+		return nil, err
+	}
+	actualMerchantIDs := make([]string, 0)
+	for _, orderItemMerchant := range orderItemMerchants {
+		actualMerchantIDs = append(actualMerchantIDs, orderItemMerchant.MerchantID)
+	}
+	// searchResults, err := s.repository.SearchOrder(ctx, req, userID)\
+	orderItemDetailsMap := make(map[string][]Item) // key: orderID-merchantID
+	for _, orderItemMerchant := range orderItemMerchants {
+		key := fmt.Sprintf("%s-%s", orderItemMerchant.OrderID, orderItemMerchant.MerchantID)
+		orderItemDetailsMap[key] = append(orderItemDetailsMap[key], orderItemMerchant.OrderItems)
+	}
+	items, err := s.merchantItemsRepository.ListByMerchantUIDAndName(ctx, actualMerchantIDs, req.Name)
+	if err != nil {
+		return nil, err
+	}
+	itemsMap := make(map[string]*merchantitems.MerchantItems) // key: itemID
+	for _, item := range items {
+		itemsMap[item.UID] = item
+	}
+
+	orderItemMerchantsMap := make(map[string][]*SearchOrderResponse) // key: orderID
+	res := make([]*SearchOrderResponse, 0)
+	for _, orderItemMerchant := range orderItemMerchants {
+		searchOrderDetailItemResponse := make([]SearchOrderDetailItemResponse, 0)
+		key := fmt.Sprintf("%s-%s", orderItemMerchant.OrderID, orderItemMerchant.MerchantID)
+		searchOrderDetailItems := orderItemDetailsMap[key]
+		for _, searchOrderDetailItem := range searchOrderDetailItems {
+			item := itemsMap[searchOrderDetailItem.ItemID]
+			searchOrderDetailItemResponse = append(searchOrderDetailItemResponse, SearchOrderDetailItemResponse{
+				MerchantItemResponse: merchantitems.MerchantItemResponse{
+					UID:             item.UID,
+					Name:            item.Name,
+					ProductCategory: item.Category,
+					Price:           item.Price,
+					ImageURL:        item.ImageURL,
+					CreatedAt:       item.CreatedAt,
+				},
+				Quantity: searchOrderDetailItem.Quantity,
+			})
+		}
+		orderItemMerchantsMap[orderItemMerchant.OrderID] = append(orderItemMerchantsMap[orderItemMerchant.OrderID], &SearchOrderResponse{
+			OrderID: orderItemMerchant.OrderID,
+			Orders: SearchOrderDetailResponse{
+				Merchant: merchants.MerchantsResponse{
+					UID:      orderItemMerchant.MerchantID,
+					Name:     orderItemMerchant.MerchantName,
+					Category: orderItemMerchant.MerchantCategory,
+					ImageURL: orderItemMerchant.MerchantImageURL,
+					Location: merchants.LocationResponse{
+						Lat: orderItemMerchant.MerchantLat,
+						Lng: orderItemMerchant.MerchantLong,
+					},
+					CreatedAt: orderItemMerchant.MerchantCreatedAt,
+				},
+				Items: searchOrderDetailItemResponse,
+			},
+		})
+		// if orderID, ok := orderItemMerchantsMap[orderItemMerchant.OrderID]; ok {
+
+		// } else {
+
+		// }
+	}
+	// for k, v := range orderItemMerchantsMap {
+	// 	res = append(res, v)
+	// }
+	return res, nil
 }
 
 func calculateDeliveryTime(startingPoint, endPoint haversine.Coordinates, merchantList []*merchants.Merchants, visited map[string]bool) (int, error) {

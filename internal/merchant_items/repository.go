@@ -12,6 +12,7 @@ type Repository interface {
 	Create(ctx context.Context, item *MerchantItems) (err error)
 	List(ctx context.Context, filter ListMerchantItemsPayload) (items []MerchantItems, err error)
 	ListByUIDs(ctx context.Context, uids []string) ([]*MerchantItems, error)
+	ListByMerchantUIDAndName(ctx context.Context, merchantUIDs []string, name string) ([]*MerchantItems, error)
 }
 
 type dbRepository struct {
@@ -120,6 +121,48 @@ func (d *dbRepository) ListByUIDs(ctx context.Context, uids []string) ([]*Mercha
 	}
 
 	q += ");"
+	rows, err := d.db.DB().QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	res := make([]*MerchantItems, 0)
+	for rows.Next() {
+		m := &MerchantItems{}
+		err = rows.Scan(&m.UID, &m.Name, &m.MerchantID, &m.Category, &m.Price, &m.ImageURL, &m.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, m)
+	}
+	return res, nil
+}
+
+// ListByMerchantIDAndName implements Repository.
+func (d *dbRepository) ListByMerchantUIDAndName(ctx context.Context, merchantUIDs []string, name string) ([]*MerchantItems, error) {
+	if len(merchantUIDs) == 0 {
+		return make([]*MerchantItems, 0), nil
+	}
+	q := `
+		SELECT mi.uid, mi.name, mi.merchant_id, mi.item_category, mi.price, mi.image_url, mi.created_at
+		FROM merchant_items mi
+		JOIN merchants m on mi.merchant_id = m.id
+		WHERE m.uid IN(
+	`
+
+	for i, v := range merchantUIDs {
+		if i > 0 {
+			q += ","
+		}
+		q += fmt.Sprintf("'%s'", v)
+
+	}
+
+	if name != "" {
+		q += fmt.Sprintf(" AND mi.name ILIKE %%%s%%);", name)
+	} else {
+		q += ");"
+	}
 	rows, err := d.db.DB().QueryContext(ctx, q)
 	if err != nil {
 		return nil, err
