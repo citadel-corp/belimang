@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/citadel-corp/belimang/internal/common/jwt"
 	"github.com/citadel-corp/belimang/internal/common/middleware"
 	"github.com/citadel-corp/belimang/internal/common/request"
 	"github.com/citadel-corp/belimang/internal/common/response"
@@ -133,8 +134,8 @@ func (h *Handler) SearchOrders(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserID(r *http.Request) (string, error) {
-	if authValue, ok := r.Context().Value(middleware.ContextAuthKey{}).(string); ok {
-		return authValue, nil
+	if authValue, ok := r.Context().Value(middleware.ContextAuthKey{}).(*jwt.UserClaims); ok {
+		return authValue.UserUID, nil
 	} else {
 		return "", errors.New("cannot parse auth value from context")
 	}

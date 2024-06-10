@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS
 calculated_estimates (
     id VARCHAR(16) PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    user_id CHAR NOT NULL,
     total_price INT NOT NULL,
     user_location_lat float NOT NULL,
     user_location_lng float NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS
 orders (
     id CHAR(16) PRIMARY KEY,
     calculated_estimate_id CHAR(16) NOT NULL,
-    user_id BIGINT NOT NULL,
+    user_id CHAR NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp
 );
 
@@ -45,7 +45,7 @@ ALTER TABLE orders ADD CONSTRAINT fk_orders_user_id
 
 ALTER TABLE orders ADD CONSTRAINT fk_user_id
     FOREIGN KEY (user_id)
-    REFERENCES users(id)
+    REFERENCES users(uid)
     ON DELETE CASCADE
     ON UPDATE NO ACTION;
 
