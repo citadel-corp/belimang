@@ -14,9 +14,9 @@ users (
 
 CREATE INDEX IF NOT EXISTS users_user_type
 	ON users USING HASH (user_type);
-CREATE INDEX IF NOT EXISTS users_username 
+CREATE INDEX IF NOT EXISTS users_username
 	ON users USING HASH (lower(username));
-CREATE INDEX IF NOT EXISTS users_email 
+CREATE INDEX IF NOT EXISTS users_email
 	ON users USING HASH (lower(email));
 CREATE INDEX IF NOT EXISTS users_created_at_desc
 	ON users(created_at DESC);

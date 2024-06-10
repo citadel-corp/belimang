@@ -19,6 +19,7 @@ import (
 	"github.com/citadel-corp/belimang/internal/image"
 	merchantitems "github.com/citadel-corp/belimang/internal/merchant_items"
 	"github.com/citadel-corp/belimang/internal/merchants"
+	"github.com/citadel-corp/belimang/internal/order"
 	"github.com/citadel-corp/belimang/internal/user"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
@@ -60,6 +61,11 @@ func main() {
 	merchantItemService := merchantitems.NewService(merchantItemRepository, merchantRepository)
 	merchantItemHandler := merchantitems.NewHandler(merchantItemService)
 
+	// initialize order domain
+	orderRepository := order.NewRepository(db)
+	orderService := order.NewService(orderRepository, merchantRepository, merchantItemRepository)
+	orderHandler := order.NewHandler(orderService)
+
 	// initialize image domain
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("ap-southeast-1"),
@@ -95,7 +101,9 @@ func main() {
 	ur := v1.PathPrefix("/users").Subrouter()
 	ur.HandleFunc("/register", userHandler.CreateNonAdmin).Methods(http.MethodPost)
 	ur.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
-	ur.HandleFunc("/estimate", middleware.AuthorizeRole(userHandler.LoginUser, string(user.User))).Methods(http.MethodPost)
+
+	ur.HandleFunc("/estimate", middleware.AuthorizeRole(orderHandler.CalculateEstimate, string(user.User))).Methods(http.MethodPost)
+	ur.HandleFunc("/orders", middleware.AuthorizeRole(orderHandler.CreateOrder, string(user.User))).Methods(http.MethodPost)
 
 	// image routes
 	ir := v1.PathPrefix("/image").Subrouter()

@@ -5,3 +5,7 @@ type CalculateOrderEstimateResponse struct {
 	EstimatedDeliveryTimeInMinutes int    `json:"estimatedDeliveryTimeInMinutes"`
 	CalculatedEstimateID           string `json:"calculatedEstimateId"`
 }
+
+type CreateOrderResponse struct {
+	OrderID string `json:"orderId"`
+}
