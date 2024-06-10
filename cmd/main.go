@@ -86,7 +86,7 @@ func main() {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text")
 		w.WriteHeader(http.StatusOK)
-		io.WriteString(w, "Service ready")
+		io.WriteString(w, "Service ready v2")
 	})
 
 	//
