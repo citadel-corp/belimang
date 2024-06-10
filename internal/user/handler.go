@@ -16,11 +16,11 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
-var (
-	requestCreate CreateUserPayload
-)
-
 func (h *Handler) CreateAdmin(w http.ResponseWriter, r *http.Request) {
+	var (
+		requestCreate CreateUserPayload
+	)
+
 	err := request.DecodeJSON(w, r, &requestCreate)
 	if err != nil {
 		response.JSON(w, http.StatusBadRequest, response.ResponseBody{
@@ -41,10 +41,14 @@ func (h *Handler) CreateAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.CreateUser(w, r)
+	h.CreateUser(w, r, requestCreate)
 }
 
 func (h *Handler) CreateNonAdmin(w http.ResponseWriter, r *http.Request) {
+	var (
+		requestCreate CreateUserPayload
+	)
+
 	err := request.DecodeJSON(w, r, &requestCreate)
 	if err != nil {
 		response.JSON(w, http.StatusBadRequest, response.ResponseBody{
@@ -65,10 +69,10 @@ func (h *Handler) CreateNonAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.CreateUser(w, r)
+	h.CreateUser(w, r, requestCreate)
 }
 
-func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request, requestCreate CreateUserPayload) {
 	userResp, err := h.service.Create(r.Context(), requestCreate)
 	if errors.Is(err, ErrUserAlreadyExists) {
 		response.JSON(w, http.StatusConflict, response.ResponseBody{
