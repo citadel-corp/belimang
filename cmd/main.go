@@ -90,7 +90,7 @@ func main() {
 	})
 
 	//
-	r.HandleFunc("/merchants/{lat},{long}", middleware.AuthorizeRole(merchantHandler.ListByDistance, string(user.User))).Methods(http.MethodGet)
+	r.HandleFunc("/merchants/nearby/{lat},{long}", middleware.AuthorizeRole(merchantHandler.ListByDistance, string(user.User))).Methods(http.MethodGet)
 
 	// admin routes
 	ar := r.PathPrefix("/admin").Subrouter()
