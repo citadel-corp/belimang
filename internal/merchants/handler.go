@@ -1,7 +1,6 @@
 package merchants
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/citadel-corp/belimang/internal/common/request"
@@ -100,8 +99,6 @@ func (h *Handler) ListByDistance(w http.ResponseWriter, r *http.Request) {
 
 	req.Lat = mux.Vars(r)["lat"]
 	req.Lng = mux.Vars(r)["long"]
-
-	fmt.Println("lat, lng: ", req.Lat, req.Lng)
 
 	err := req.Validate()
 	if err != nil {

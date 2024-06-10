@@ -83,8 +83,6 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantItemsPayload
 	params = append(params, filter.Offset)
 	params = append(params, filter.Limit)
 
-	fmt.Println("query 1:", q)
-
 	rows, err := d.db.DB().QueryContext(ctx, q, params...)
 	if err != nil {
 		return

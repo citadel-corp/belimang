@@ -1,6 +1,9 @@
 package merchants
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type MerchantUIDResponse struct {
 	UID string `json:"merchantId"`
@@ -34,4 +37,78 @@ func CreateMerchantsResponse(merchants []Merchants) []MerchantsResponse {
 	}
 
 	return merchantsResponse
+}
+
+type MerchantItemResponse struct {
+	UID             string    `json:"itemId"`
+	Name            string    `json:"name"`
+	ProductCategory string    `json:"productCategory"`
+	Price           int       `json:"price"`
+	ImageURL        string    `json:"imageUrl"`
+	CreatedAt       time.Time `json:"createdAt"`
+}
+
+type MerchantWithItemsResponse struct {
+	UID       string                 `json:"merchantId"`
+	Name      string                 `json:"name"`
+	Category  string                 `json:"merchantCategory"`
+	ImageURL  string                 `json:"imageUrl"`
+	Location  LocationResponse       `json:"location"`
+	CreatedAt time.Time              `json:"createdAt"`
+	Items     []MerchantItemResponse `json:"items"`
+}
+
+func CreateMerchantsWithItemsResponse(merchants []MerchantsWithItem) []MerchantWithItemsResponse {
+	merchantMap := make(map[uint64]*MerchantWithItemsResponse)
+
+	for _, merchant := range merchants {
+		if _, exists := merchantMap[merchant.ID]; !exists {
+			merchantMap[merchant.ID] = &MerchantWithItemsResponse{
+				UID:      merchant.UID,
+				Name:     merchant.Name,
+				Category: string(merchant.Category),
+				ImageURL: merchant.ImageURL,
+				Location: LocationResponse{
+					Lat: merchant.Lat,
+					Lng: merchant.Lng,
+				},
+				CreatedAt: merchant.CreatedAt,
+				Items:     []MerchantItemResponse{},
+			}
+		}
+
+		if merchant.Item.UID == "" {
+			continue
+		}
+
+		merchantMap[merchant.ID].Items = append(merchantMap[merchant.ID].Items, MerchantItemResponse{
+			UID:             merchant.Item.UID,
+			Name:            merchant.Item.Name,
+			ProductCategory: getString(merchant.Item.Category),
+			Price:           merchant.Item.Price,
+			ImageURL:        merchant.Item.ImageURL,
+			CreatedAt:       getTime(merchant.Item.CreatedAt),
+		})
+	}
+
+	var result []MerchantWithItemsResponse
+	for _, merchant := range merchantMap {
+		result = append(result, *merchant)
+	}
+
+	return result
+}
+
+func getString(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
+	}
+	return ""
+}
+
+func getTime(ns sql.NullTime) time.Time {
+	if ns.Valid {
+		return ns.Time
+	}
+	return time.Time{}
 }
