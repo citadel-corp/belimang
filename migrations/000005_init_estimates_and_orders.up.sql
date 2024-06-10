@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS
 calculated_estimates (
     id VARCHAR(16) PRIMARY KEY,
-    user_id CHAR(16) NOT NULL,
+    user_id BIGINT NOT NULL,
     total_price INT NOT NULL,
     user_location_lat float NOT NULL,
     user_location_lng float NOT NULL,
@@ -10,12 +10,13 @@ calculated_estimates (
     merchants JSONB NOT NULL, -- array of merchant_id
     items JSONB NOT NULL, -- array of object, object of item_id and quantity
     created_at TIMESTAMP DEFAULT current_timestamp
-    CONSTRAINT fk_user_id
-			FOREIGN KEY (user_id)
-			REFERENCES users(id)
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION
 );
+
+ALTER TABLE calculated_estimates ADD CONSTRAINT fk_user_id
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION;
 
 CREATE INDEX IF NOT EXISTS calculated_estimates_created_at_desc
 	ON calculated_estimates (created_at DESC);
@@ -26,19 +27,21 @@ CREATE TABLE IF NOT EXISTS
 orders (
     id CHAR(16) PRIMARY KEY,
     calculated_estimate_id CHAR(16) NOT NULL,
-    user_id CHAR(16) NOT NULL,
+    user_id BIGINT NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp
-    CONSTRAINT fk_calculated_estimate_id
-			FOREIGN KEY (calculated_estimate_id)
-			REFERENCES calculated_estimates(id)
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION
-    CONSTRAINT fk_user_id
-			FOREIGN KEY (user_id)
-			REFERENCES users(id)
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION
 );
+
+ALTER TABLE orders ADD CONSTRAINT fk_user_id
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION;
+
+ALTER TABLE orders ADD CONSTRAINT fk_calculated_estimate_id
+    FOREIGN KEY (calculated_estimate_id)
+    REFERENCES calculated_estimates(id)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION;
 
 CREATE INDEX IF NOT EXISTS orders_calculated_estimate_id
 	ON orders USING HASH(calculated_estimate_id);
@@ -53,14 +56,9 @@ CREATE TABLE IF NOT EXISTS
 order_items(
     id VARCHAR(16) PRIMARY KEY,
     order_id CHAR(16) NOT NULL,
-    merchant_id CHAR(16) NOT NULL,
+    merchant_id BIGINT NOT NULL,
     items JSONB NOT NULL, -- array of object, object of item_id and quantity
     created_at TIMESTAMP DEFAULT current_timestamp
-    CONSTRAINT fk_checkout_history_id
-			FOREIGN KEY (checkout_history_id)
-			REFERENCES checkout_history(id)
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION
 );
 
 CREATE INDEX IF NOT EXISTS order_items_order_id
