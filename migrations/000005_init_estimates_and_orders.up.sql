@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS
 calculated_estimates (
     id VARCHAR(16) PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    user_id CHAR NOT NULL,
     total_price INT NOT NULL,
     user_location_lat float NOT NULL,
     user_location_lng float NOT NULL,
@@ -12,11 +12,11 @@ calculated_estimates (
     created_at TIMESTAMP DEFAULT current_timestamp
 );
 
-ALTER TABLE calculated_estimates ADD CONSTRAINT fk_user_id
+ALTER TABLE calculated_estimates ADD CONSTRAINT fk_estimate_user_id
     FOREIGN KEY (user_id)
-    REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION;
+			REFERENCES users(uid)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION;
 
 CREATE INDEX IF NOT EXISTS calculated_estimates_created_at_desc
 	ON calculated_estimates (created_at DESC);
@@ -27,13 +27,25 @@ CREATE TABLE IF NOT EXISTS
 orders (
     id CHAR(16) PRIMARY KEY,
     calculated_estimate_id CHAR(16) NOT NULL,
-    user_id BIGINT NOT NULL,
+    user_id CHAR NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp
 );
 
+ALTER TABLE orders ADD CONSTRAINT fk_orders_calculated_estimate_id
+    FOREIGN KEY (calculated_estimate_id)
+			REFERENCES calculated_estimates(id)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION;
+
+ALTER TABLE orders ADD CONSTRAINT fk_orders_user_id
+	FOREIGN KEY (user_id)
+		REFERENCES users(uid)
+		ON DELETE CASCADE
+		ON UPDATE NO ACTION;
+
 ALTER TABLE orders ADD CONSTRAINT fk_user_id
     FOREIGN KEY (user_id)
-    REFERENCES users(id)
+    REFERENCES users(uid)
     ON DELETE CASCADE
     ON UPDATE NO ACTION;
 
@@ -45,7 +57,7 @@ ALTER TABLE orders ADD CONSTRAINT fk_calculated_estimate_id
 
 CREATE INDEX IF NOT EXISTS orders_calculated_estimate_id
 	ON orders USING HASH(calculated_estimate_id);
-CREATE INDEX IF NOT EXISTS checkout_item_history_user_id
+CREATE INDEX IF NOT EXISTS orders_user_id
 	ON orders USING HASH(user_id);
 CREATE INDEX IF NOT EXISTS orders_created_at_desc
 	ON orders (created_at DESC);
@@ -54,12 +66,18 @@ CREATE INDEX IF NOT EXISTS orders_created_at_asc
 
 CREATE TABLE IF NOT EXISTS
 order_items(
-    id VARCHAR(16) PRIMARY KEY,
+    id CHAR(16) PRIMARY KEY,
     order_id CHAR(16) NOT NULL,
     merchant_id BIGINT NOT NULL,
     items JSONB NOT NULL, -- array of object, object of item_id and quantity
     created_at TIMESTAMP DEFAULT current_timestamp
 );
+
+ALTER TABLE order_items ADD CONSTRAINT fk_order_items_order_id
+    FOREIGN KEY (order_id)
+			REFERENCES orders(id)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION;
 
 CREATE INDEX IF NOT EXISTS order_items_order_id
 	ON order_items USING HASH(order_id);

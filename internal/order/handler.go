@@ -4,9 +4,11 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/citadel-corp/belimang/internal/common/jwt"
 	"github.com/citadel-corp/belimang/internal/common/middleware"
 	"github.com/citadel-corp/belimang/internal/common/request"
 	"github.com/citadel-corp/belimang/internal/common/response"
+	"github.com/gorilla/schema"
 )
 
 type Handler struct {
@@ -100,9 +102,40 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) SearchOrders(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{})
+		return
+	}
+	var req SearchOrderPayload
+
+	newSchema := schema.NewDecoder()
+	newSchema.IgnoreUnknownKeys(true)
+
+	if err := newSchema.Decode(&req, r.URL.Query()); err != nil {
+		response.JSON(w, http.StatusBadRequest, response.ResponseBody{})
+		return
+	}
+
+	orders, err := h.service.SearchOrders(r.Context(), req, userID)
+	if err != nil {
+		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{
+			Message: "Internal server error",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	response.JSON(w, http.StatusOK, response.ResponseBody{
+		Message: "Orders fetched successfully",
+		Data:    orders,
+	})
+}
+
 func getUserID(r *http.Request) (string, error) {
-	if authValue, ok := r.Context().Value(middleware.ContextAuthKey{}).(string); ok {
-		return authValue, nil
+	if authValue, ok := r.Context().Value(middleware.ContextAuthKey{}).(*jwt.UserClaims); ok {
+		return authValue.UserUID, nil
 	} else {
 		return "", errors.New("cannot parse auth value from context")
 	}

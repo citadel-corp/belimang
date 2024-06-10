@@ -11,6 +11,7 @@ type Order struct {
 
 type OrderItem struct {
 	ID         string
+	UserID     string
 	OrderID    string
 	MerchantID string
 	Items      Items
