@@ -14,7 +14,7 @@ import (
 type Service interface {
 	CalculateEstimate(ctx context.Context, req CalculateOrderEstimateRequest, userID string) (*CalculateOrderEstimateResponse, error)
 	CreateOrder(ctx context.Context, req CreateOrderRequest, userID string) (*CreateOrderResponse, error)
-	SearchOrder(ctx context.Context, req SearchOrderPayload, userID string) ([]*SearchOrderResponse, error)
+	SearchOrders(ctx context.Context, req SearchOrderPayload, userID string) ([]*SearchOrderResponse, error)
 }
 
 type orderService struct {
@@ -159,8 +159,8 @@ func (s *orderService) CreateOrder(ctx context.Context, req CreateOrderRequest, 
 	}, nil
 }
 
-// SearchOrder implements Service.
-func (s *orderService) SearchOrder(ctx context.Context, req SearchOrderPayload, userID string) ([]*SearchOrderResponse, error) {
+// SearchOrders implements Service.
+func (s *orderService) SearchOrders(ctx context.Context, req SearchOrderPayload, userID string) ([]*SearchOrderResponse, error) {
 	orderItemMerchants, err := s.repository.SearchOrderItemMerchants(ctx, req, userID)
 	if err != nil {
 		return nil, err

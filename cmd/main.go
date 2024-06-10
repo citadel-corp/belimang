@@ -104,6 +104,7 @@ func main() {
 
 	ur.HandleFunc("/estimate", middleware.AuthorizeRole(orderHandler.CalculateEstimate, string(user.User))).Methods(http.MethodPost)
 	ur.HandleFunc("/orders", middleware.AuthorizeRole(orderHandler.CreateOrder, string(user.User))).Methods(http.MethodPost)
+	ur.HandleFunc("/orders", middleware.AuthorizeRole(orderHandler.SearchOrders, string(user.User))).Methods(http.MethodGet)
 
 	// image routes
 	ir := v1.PathPrefix("/image").Subrouter()

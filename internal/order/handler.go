@@ -101,7 +101,7 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) ListOrderProduct(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SearchOrders(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserID(r)
 	if err != nil {
 		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{})
@@ -117,7 +117,7 @@ func (h *Handler) ListOrderProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orders, err := h.service.SearchOrder(r.Context(), req, userID)
+	orders, err := h.service.SearchOrders(r.Context(), req, userID)
 	if err != nil {
 		response.JSON(w, http.StatusInternalServerError, response.ResponseBody{
 			Message: "Internal server error",
