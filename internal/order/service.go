@@ -186,7 +186,7 @@ func (s *orderService) SearchOrders(ctx context.Context, req SearchOrderPayload,
 					ProductCategory: item.Category,
 					Price:           item.Price,
 					ImageURL:        item.ImageURL,
-					CreatedAt:       item.CreatedAt,
+					CreatedAt:       item.CreatedAt.Nanosecond(),
 				},
 				Quantity: searchOrderDetailItem.Quantity,
 			})

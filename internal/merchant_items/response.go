@@ -1,7 +1,5 @@
 package merchantitems
 
-import "time"
-
 type MerchantItemUIDResponse struct {
 	UID string `json:"itemId"`
 }
@@ -12,7 +10,7 @@ type MerchantItemResponse struct {
 	ProductCategory ItemCategory `json:"productCategory"`
 	Price           int          `json:"price"`
 	ImageURL        string       `json:"imageUrl"`
-	CreatedAt       time.Time    `json:"createdAt"`
+	CreatedAt       int          `json:"createdAt"`
 }
 
 func CreateMerchantItemListResponse(items []MerchantItems) []MerchantItemResponse {
@@ -24,7 +22,7 @@ func CreateMerchantItemListResponse(items []MerchantItems) []MerchantItemRespons
 			ProductCategory: item.Category,
 			Price:           item.Price,
 			ImageURL:        item.ImageURL,
-			CreatedAt:       item.CreatedAt,
+			CreatedAt:       item.CreatedAt.Nanosecond(),
 		})
 	}
 	return itemsResponse

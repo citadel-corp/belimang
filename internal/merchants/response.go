@@ -40,12 +40,12 @@ func CreateMerchantsResponse(merchants []Merchants) []MerchantsResponse {
 }
 
 type MerchantItemResponse struct {
-	UID             string    `json:"itemId"`
-	Name            string    `json:"name"`
-	ProductCategory string    `json:"productCategory"`
-	Price           int       `json:"price"`
-	ImageURL        string    `json:"imageUrl"`
-	CreatedAt       time.Time `json:"createdAt"`
+	UID             string `json:"itemId"`
+	Name            string `json:"name"`
+	ProductCategory string `json:"productCategory"`
+	Price           int    `json:"price"`
+	ImageURL        string `json:"imageUrl"`
+	CreatedAt       int    `json:"createdAt"`
 }
 
 type MerchantWithItemsResponse struct {
@@ -54,7 +54,7 @@ type MerchantWithItemsResponse struct {
 	Category  string                 `json:"merchantCategory"`
 	ImageURL  string                 `json:"imageUrl"`
 	Location  LocationResponse       `json:"location"`
-	CreatedAt time.Time              `json:"createdAt"`
+	CreatedAt int                    `json:"createdAt"`
 	Items     []MerchantItemResponse `json:"items"`
 }
 
@@ -72,7 +72,7 @@ func CreateMerchantsWithItemsResponse(merchants []MerchantsWithItem) []MerchantW
 					Lat: merchant.Lat,
 					Lng: merchant.Lng,
 				},
-				CreatedAt: merchant.CreatedAt,
+				CreatedAt: merchant.CreatedAt.Nanosecond(),
 				Items:     []MerchantItemResponse{},
 			}
 		}
@@ -87,7 +87,7 @@ func CreateMerchantsWithItemsResponse(merchants []MerchantsWithItem) []MerchantW
 			ProductCategory: getString(merchant.Item.Category),
 			Price:           merchant.Item.Price,
 			ImageURL:        merchant.Item.ImageURL,
-			CreatedAt:       getTime(merchant.Item.CreatedAt),
+			CreatedAt:       getTime(merchant.Item.CreatedAt).Nanosecond(),
 		})
 	}
 
