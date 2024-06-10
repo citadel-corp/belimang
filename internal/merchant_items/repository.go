@@ -6,11 +6,12 @@ import (
 	"strings"
 
 	"github.com/citadel-corp/belimang/internal/common/db"
+	"github.com/citadel-corp/belimang/internal/common/response"
 )
 
 type Repository interface {
 	Create(ctx context.Context, item *MerchantItems) (err error)
-	List(ctx context.Context, filter ListMerchantItemsPayload) (items []MerchantItems, err error)
+	List(ctx context.Context, filter ListMerchantItemsPayload) (items []MerchantItems, pagination *response.Pagination, err error)
 	ListByUIDs(ctx context.Context, uids []string) ([]*MerchantItems, error)
 	ListByMerchantUIDAndName(ctx context.Context, merchantUIDs []string, name string) ([]*MerchantItems, error)
 }
@@ -38,11 +39,11 @@ func (d *dbRepository) Create(ctx context.Context, item *MerchantItems) (err err
 	return
 }
 
-func (d *dbRepository) List(ctx context.Context, filter ListMerchantItemsPayload) (items []MerchantItems, err error) {
+func (d *dbRepository) List(ctx context.Context, filter ListMerchantItemsPayload) (items []MerchantItems, pagination *response.Pagination, err error) {
 	items = make([]MerchantItems, 0)
 
 	q := `
-		SELECT mi.uid, mi.name, mi.merchant_id, mi.item_category, mi.price, mi.image_url, mi.created_at
+		SELECT COUNT(*) OVER() AS total_count, mi.uid, mi.name, mi.merchant_id, mi.item_category, mi.price, mi.image_url, mi.created_at
 		FROM merchant_items mi
 	`
 
@@ -88,9 +89,13 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantItemsPayload
 		return
 	}
 
+	pagination = &response.Pagination{}
+	pagination.Limit = filter.Limit
+	pagination.Offset = filter.Offset
+
 	for rows.Next() {
 		m := MerchantItems{}
-		err = rows.Scan(&m.UID, &m.Name, &m.MerchantID, &m.Category, &m.Price, &m.ImageURL, &m.CreatedAt)
+		err = rows.Scan(&pagination.Total, &m.UID, &m.Name, &m.MerchantID, &m.Category, &m.Price, &m.ImageURL, &m.CreatedAt)
 		if err != nil {
 			return
 		}

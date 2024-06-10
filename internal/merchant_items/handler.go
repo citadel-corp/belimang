@@ -81,7 +81,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	itemResp, err := h.service.List(r.Context(), req)
+	itemResp, pagination, err := h.service.List(r.Context(), req)
 	if err == merchants.ErrMerchantNotFound {
 		response.JSON(w, http.StatusNotFound, response.ResponseBody{
 			Message: "Merchant not found",
@@ -99,5 +99,6 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, response.ResponseBody{
 		Message: "Merchant items fetched successfully",
 		Data:    itemResp,
+		Meta:    pagination,
 	})
 }

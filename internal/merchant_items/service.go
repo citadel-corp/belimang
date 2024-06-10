@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/citadel-corp/belimang/internal/common/id"
+	"github.com/citadel-corp/belimang/internal/common/response"
 	"github.com/citadel-corp/belimang/internal/merchants"
 )
 
 type Service interface {
 	Create(ctx context.Context, payload CreateMerchantItemPayload) (resp *MerchantItemUIDResponse, err error)
-	List(ctx context.Context, payload ListMerchantItemsPayload) (resp []MerchantItemResponse, err error)
+	List(ctx context.Context, payload ListMerchantItemsPayload) (resp []MerchantItemResponse, pagination *response.Pagination, err error)
 }
 
 type merchantItemService struct {
@@ -48,7 +49,7 @@ func (s *merchantItemService) Create(ctx context.Context, payload CreateMerchant
 	return
 }
 
-func (s *merchantItemService) List(ctx context.Context, payload ListMerchantItemsPayload) (resp []MerchantItemResponse, err error) {
+func (s *merchantItemService) List(ctx context.Context, payload ListMerchantItemsPayload) (resp []MerchantItemResponse, pagination *response.Pagination, err error) {
 	// get merchant
 	merchant, err := s.merchantRepository.GetByUID(ctx, payload.MerchantUID)
 	if err != nil {
@@ -60,10 +61,10 @@ func (s *merchantItemService) List(ctx context.Context, payload ListMerchantItem
 		payload.Limit = 5
 	}
 
-	merchantItems, err := s.repository.List(ctx, payload)
+	merchantItems, pagination, err := s.repository.List(ctx, payload)
 	if err != nil {
 		return
 	}
 
-	return CreateMerchantItemListResponse(merchantItems), nil
+	return CreateMerchantItemListResponse(merchantItems), pagination, nil
 }
