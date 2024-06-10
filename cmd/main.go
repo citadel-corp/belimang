@@ -81,7 +81,7 @@ func main() {
 	r := mux.NewRouter()
 	r.Use(middleware.Logging)
 	r.Use(middleware.PanicRecoverer)
-	v1 := r.PathPrefix("/v1").Subrouter()
+	// v1 := r.PathPrefix("/v1").Subrouter()
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text")
@@ -90,10 +90,10 @@ func main() {
 	})
 
 	//
-	v1.HandleFunc("/merchants/{lat},{long}", middleware.AuthorizeRole(merchantHandler.ListByDistance, string(user.User))).Methods(http.MethodGet)
+	r.HandleFunc("/merchants/{lat},{long}", middleware.AuthorizeRole(merchantHandler.ListByDistance, string(user.User))).Methods(http.MethodGet)
 
 	// admin routes
-	ar := v1.PathPrefix("/admin").Subrouter()
+	ar := r.PathPrefix("/admin").Subrouter()
 	ar.HandleFunc("/register", userHandler.CreateAdmin).Methods(http.MethodPost)
 	ar.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
 	ar.HandleFunc("/merchants", middleware.AuthorizeRole(merchantHandler.Create, string(user.Admin))).Methods(http.MethodPost)
@@ -101,7 +101,7 @@ func main() {
 	ar.HandleFunc("/merchants/{merchantId}/items", middleware.AuthorizeRole(merchantItemHandler.Create, string(user.Admin))).Methods(http.MethodPost)
 	ar.HandleFunc("/merchants/{merchantId}/items", middleware.AuthorizeRole(merchantItemHandler.List, string(user.Admin))).Methods(http.MethodGet)
 
-	ur := v1.PathPrefix("/users").Subrouter()
+	ur := r.PathPrefix("/users").Subrouter()
 	ur.HandleFunc("/register", userHandler.CreateNonAdmin).Methods(http.MethodPost)
 	ur.HandleFunc("/login", userHandler.LoginUser).Methods(http.MethodPost)
 
@@ -110,7 +110,7 @@ func main() {
 	ur.HandleFunc("/orders", middleware.AuthorizeRole(orderHandler.SearchOrders, string(user.User))).Methods(http.MethodGet)
 
 	// image routes
-	ir := v1.PathPrefix("/image").Subrouter()
+	ir := r.PathPrefix("/image").Subrouter()
 	ir.HandleFunc("", middleware.Authorized(imageHandler.UploadToS3)).Methods(http.MethodPost)
 
 	httpServer := &http.Server{
