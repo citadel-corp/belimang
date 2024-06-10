@@ -27,8 +27,8 @@ func (s *merchantService) Create(ctx context.Context, req CreateMerchantPayload)
 		Name:     req.Name,
 		Category: req.Category,
 		ImageURL: req.ImageURL,
-		Lat:      req.Location.Lat,
-		Lng:      req.Location.Lng,
+		Lat:      *req.Location.Lat,
+		Lng:      *req.Location.Lng,
 	}
 	err := s.repository.Create(ctx, merchant)
 	if err != nil {

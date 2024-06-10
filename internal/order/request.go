@@ -36,6 +36,7 @@ func (p OrderRequest) Validate() error {
 	return validation.ValidateStruct(&p,
 		validation.Field(&p.MerchantID, validation.Required),
 		validation.Field(&p.IsStartingPoint, validation.NotNil),
+		validation.Field(&p.Items),
 	)
 }
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/citadel-corp/belimang/internal/common/haversine"
 	"github.com/citadel-corp/belimang/internal/common/jwt"
 	"github.com/citadel-corp/belimang/internal/common/middleware"
 	"github.com/citadel-corp/belimang/internal/common/request"
@@ -38,6 +39,13 @@ func (h *Handler) CalculateEstimate(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.service.CalculateEstimate(r.Context(), req, userID)
 	if errors.Is(err, ErrValidationFailed) {
+		response.JSON(w, http.StatusBadRequest, response.ResponseBody{
+			Message: "Bad request",
+			Error:   err.Error(),
+		})
+		return
+	}
+	if errors.Is(err, haversine.ErrDistanceTooFar) {
 		response.JSON(w, http.StatusBadRequest, response.ResponseBody{
 			Message: "Bad request",
 			Error:   err.Error(),

@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS
 calculated_estimates (
     id VARCHAR(16) PRIMARY KEY,
-    user_id CHAR NOT NULL,
+    user_id CHAR(16) NOT NULL,
     total_price INT NOT NULL,
     user_location_lat float NOT NULL,
     user_location_lng float NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS
 orders (
     id CHAR(16) PRIMARY KEY,
     calculated_estimate_id CHAR(16) NOT NULL,
-    user_id CHAR NOT NULL,
+    user_id CHAR(16) NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp
 );
 

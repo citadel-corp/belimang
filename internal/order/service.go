@@ -3,6 +3,7 @@ package order
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/citadel-corp/belimang/internal/common/haversine"
 	"github.com/citadel-corp/belimang/internal/common/id"
@@ -42,6 +43,8 @@ func (s *orderService) CalculateEstimate(ctx context.Context, req CalculateOrder
 	startingMerchantID := ""
 	allItems := make([]OrderItemRequest, 0)
 	calculateEstimateItems := make(Items, 0)
+	itemQuantityMap := make(map[string]int) // key: item id
+	merchantItemIDs := make([]string, 0)
 	for i, order := range req.Orders {
 		if *order.IsStartingPoint {
 			startingPointCount += 1
@@ -55,28 +58,34 @@ func (s *orderService) CalculateEstimate(ctx context.Context, req CalculateOrder
 				MerchantID: order.MerchantID,
 				Quantity:   item.Quantity,
 			})
+			itemQuantityMap[item.ItemID] = item.Quantity
+			merchantItemIDs = append(merchantItemIDs, item.ItemID)
 		}
 	}
 	if startingPointCount != 1 {
 		return nil, fmt.Errorf("%w: %w", ErrValidationFailed, ErrStartingPointInvalid)
 	}
+	// remove duplicate
+	slices.Sort(merchantIDs)
+	merchantIDs = slices.Compact(merchantIDs)
 	merchantList, err := s.merchantRepository.ListByUIDs(ctx, merchantIDs)
 	if err != nil {
 		return nil, err
 	}
-	if len(req.Orders) != len(merchantList) {
+
+	if len(merchantIDs) != len(merchantList) {
 		return nil, ErrSomeMerchantNotFound
 	}
-	itemList, err := s.merchantItemsRepository.ListByUIDs(ctx, merchantIDs)
+	itemList, err := s.merchantItemsRepository.ListByUIDs(ctx, merchantItemIDs)
 	if err != nil {
 		return nil, err
 	}
-	if len(allItems) != len(itemList) {
+	if len(itemQuantityMap) != len(itemList) {
 		return nil, ErrSomeItemNotFound
 	}
 	totalPrice := 0
 	for _, item := range itemList {
-		totalPrice += item.Price
+		totalPrice += item.Price * itemQuantityMap[item.UID]
 	}
 	// calculate delivery time
 	deliveryTime, err := haversine.CalculateDeliveryTime(req.UserLocation.Lat, req.UserLocation.Long, startingMerchantID, merchantList)
