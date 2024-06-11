@@ -16,8 +16,8 @@ type CreateOrderResponse struct {
 }
 
 type SearchOrderResponse struct {
-	OrderID string                    `json:"orderId"`
-	Orders  SearchOrderDetailResponse `json:"orders"`
+	OrderID string                      `json:"orderId"`
+	Orders  []SearchOrderDetailResponse `json:"orders"`
 }
 
 type SearchOrderDetailResponse struct {

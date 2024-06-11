@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS
 order_items(
     id CHAR(16) PRIMARY KEY,
     order_id CHAR(16) NOT NULL,
-    merchant_id BIGINT NOT NULL,
+    merchant_id CHAR(16) NOT NULL,
     items JSONB NOT NULL, -- array of object, object of item_id and quantity
     created_at TIMESTAMP DEFAULT current_timestamp
 );

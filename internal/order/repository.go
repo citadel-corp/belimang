@@ -18,7 +18,6 @@ type Repository interface {
 	InsertOrderItem(ctx context.Context, orderItem *OrderItem) error
 	ListOrdersByUserID(ctx context.Context, userID string) (*Order, error)
 	ListOrderItemsByOrderID(ctx context.Context, orderID string) ([]*OrderItem, error)
-	SearchOrder(ctx context.Context, req SearchOrderPayload, userID string) ([]*searchOrderQueryResult, error)
 	SearchOrderItemMerchants(ctx context.Context, req SearchOrderPayload, userID string) ([]*searchOrderItemMerchantsQueryResult, error)
 }
 
@@ -51,11 +50,11 @@ func (d *dbRepository) GetCalculatedEstimate(ctx context.Context, id string) (*C
 	q := `
 	    SELECT id, user_id, total_price, user_location_lat, user_location_lng, estimated_delivery_time, ordered, merchants, items
 		FROM calculated_estimates
-        WHERE id = ?;
+        WHERE id = $1;
 	`
 	row := d.db.DB().QueryRowContext(ctx, q, id)
 	calculatedEstimate := &CalculatedEstimate{}
-	err := row.Scan(&calculatedEstimate.ID, &calculatedEstimate.UserID, &calculatedEstimate.TotalPrice, &calculatedEstimate.Lat, &calculatedEstimate.Long, &calculatedEstimate.EstimatedDeliveryTime, &calculatedEstimate.Ordered, &calculatedEstimate.Ordered, &calculatedEstimate.Merchants, &calculatedEstimate.Items)
+	err := row.Scan(&calculatedEstimate.ID, &calculatedEstimate.UserID, &calculatedEstimate.TotalPrice, &calculatedEstimate.Lat, &calculatedEstimate.Long, &calculatedEstimate.EstimatedDeliveryTime, &calculatedEstimate.Ordered, &calculatedEstimate.Merchants, &calculatedEstimate.Items)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrCalculatedEstimateNotFound
 	}
@@ -102,7 +101,7 @@ func (d *dbRepository) ListOrdersByUserID(ctx context.Context, userID string) (*
 	q := `
 	    SELECT id, calculated_estimate_id, user_id
 		FROM orders
-		WHERE user_id = ?;
+		WHERE user_id = $1;
 	`
 	row := d.db.DB().QueryRowContext(ctx, q, userID)
 	o := &Order{}
@@ -118,7 +117,7 @@ func (d *dbRepository) ListOrderItemsByOrderID(ctx context.Context, orderID stri
 	q := `
 	    SELECT id, order_id, merchant_id, items
 		FROM order_items
-		WHERE order_id = ?;
+		WHERE order_id = $1;
 	`
 	rows, err := d.db.DB().QueryContext(ctx, q, orderID)
 	if err != nil {
@@ -137,62 +136,11 @@ func (d *dbRepository) ListOrderItemsByOrderID(ctx context.Context, orderID stri
 	return res, nil
 }
 
-// SearchOrder implements Repository.
-func (d *dbRepository) SearchOrder(ctx context.Context, req SearchOrderPayload, userID string) ([]*searchOrderQueryResult, error) {
-	paramNo := 1
-	listQuery := `
-		SELECT oi.order_id, oi.merchant_id, oi.items, mi.uid, mi.name, mi.item_category, mi.price, order_item_detail.quantity, mi.image_url, mi.created_at, m.uid, m.name, m.merchant_category, m.image_url, m.location_lat, m.location_lng, m.created_at
-		FROM order_items oi
-		CROSS JOIN LATERAL jsonb_array_elements(oi.items) as order_item_detail
-		INNER JOIN merchant_items mi on order_item_detail.item_id = mi.uid
-		INNER JOIN merchants m on oi.merchant_id = m.id
-		WHERE `
-	params := make([]interface{}, 0)
-	if req.MerchantID != "" {
-		listQuery += fmt.Sprintf("oi.merchant_id = $%d AND ", paramNo)
-		paramNo += 1
-		params = append(params, req.MerchantID)
-	}
-	if req.Name != "" {
-		listQuery += fmt.Sprintf("m.name ILIKE %%$%d%% AND ", paramNo)
-		paramNo += 1
-		params = append(params, req.Name)
-		listQuery += fmt.Sprintf("mi.name ILIKE %%$%d%% AND ", paramNo)
-		paramNo += 1
-		params = append(params, req.Name)
-	}
-	if req.MerchantCategory != "" {
-		listQuery += fmt.Sprintf("m.merchant_category = $%d AND ", paramNo)
-		paramNo += 1
-		params = append(params, req.MerchantCategory)
-	}
-	listQuery += fmt.Sprintf("oi.user_id = $%d ", paramNo)
-	params = append(params, userID)
-	if strings.HasSuffix(listQuery, "AND ") {
-		listQuery, _ = strings.CutSuffix(listQuery, "AND ")
-	}
-	listQuery += fmt.Sprintf(" LIMIT %d OFFSET %d;", req.Limit, req.Offset)
-	rows, err := d.db.DB().QueryContext(ctx, listQuery, params...)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*searchOrderQueryResult, 0)
-	for rows.Next() {
-		o := &searchOrderQueryResult{}
-		err = rows.Scan(&o.ItemID, &o.ItemName, &o.ItemCategory, &o.ItemPrice, &o.ItemQuantity, &o.ItemImageURL, &o.ItemCreatedAt, &o.MerchantID, &o.MerchantName, &o.MerchantCategory, &o.MerchantImageURL, &o.MerchantLat, &o.MerchantLong, &o.MerchantLong)
-		if err != nil {
-			return nil, err
-		}
-		res = append(res, o)
-	}
-	return res, nil
-}
-
 // SearchOrderItemMerchants implements Repository.
 func (d *dbRepository) SearchOrderItemMerchants(ctx context.Context, req SearchOrderPayload, userID string) ([]*searchOrderItemMerchantsQueryResult, error) {
 	paramNo := 1
 	listQuery := `
-		SELECT o.id, oi.items, mi.uid, mi.name, mi.item_category, mi.price, order_item_detail.quantity, mi.image_url, mi.created_at, m.uid, m.name, m.merchant_category, m.image_url, m.location_lat, m.location_lng, m.created_at
+		SELECT o.id, oi.items, m.uid, m.name, m.merchant_category, m.image_url, m.location_lat, m.location_lng, m.created_at
 		FROM order_items oi
 		INNER JOIN orders o on oi.order_id = o.id
 		INNER JOIN merchants m on oi.merchant_id = m.uid
@@ -204,16 +152,14 @@ func (d *dbRepository) SearchOrderItemMerchants(ctx context.Context, req SearchO
 		params = append(params, req.MerchantID)
 	}
 	if req.Name != "" {
-		listQuery += fmt.Sprintf("m.name ILIKE %%$%d%% AND ", paramNo)
-		paramNo += 1
-		params = append(params, req.Name)
+		listQuery += fmt.Sprintf("m.name ILIKE '%%%s%%' AND ", req.Name)
 	}
 	if req.MerchantCategory != "" {
 		listQuery += fmt.Sprintf("m.merchant_category = $%d AND ", paramNo)
 		paramNo += 1
 		params = append(params, req.MerchantCategory)
 	}
-	listQuery += fmt.Sprintf("oi.user_id = $%d ", paramNo)
+	listQuery += fmt.Sprintf("o.user_id = $%d ", paramNo)
 	params = append(params, userID)
 	if strings.HasSuffix(listQuery, "AND ") {
 		listQuery, _ = strings.CutSuffix(listQuery, "AND ")
@@ -226,7 +172,7 @@ func (d *dbRepository) SearchOrderItemMerchants(ctx context.Context, req SearchO
 	res := make([]*searchOrderItemMerchantsQueryResult, 0)
 	for rows.Next() {
 		o := &searchOrderItemMerchantsQueryResult{}
-		err = rows.Scan(&o.OrderID, &o.OrderItems, &o.OrderID, &o.MerchantID, &o.MerchantName, &o.MerchantCategory, &o.MerchantImageURL, &o.MerchantLat, &o.MerchantLong, &o.MerchantCreatedAt)
+		err = rows.Scan(&o.OrderID, &o.OrderItems, &o.MerchantID, &o.MerchantName, &o.MerchantCategory, &o.MerchantImageURL, &o.MerchantLat, &o.MerchantLong, &o.MerchantCreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +183,7 @@ func (d *dbRepository) SearchOrderItemMerchants(ctx context.Context, req SearchO
 
 type searchOrderItemMerchantsQueryResult struct {
 	OrderID           string
-	OrderItems        Item
+	OrderItems        Items
 	MerchantID        string
 	MerchantName      string
 	MerchantCategory  string
@@ -245,23 +191,4 @@ type searchOrderItemMerchantsQueryResult struct {
 	MerchantLat       float64
 	MerchantLong      float64
 	MerchantCreatedAt time.Time
-}
-
-type searchOrderQueryResult struct {
-	OrderID           string
-	OrderItems        Item
-	MerchantID        string
-	MerchantName      string
-	MerchantCategory  string
-	MerchantImageURL  string
-	MerchantLat       float64
-	MerchantLong      float64
-	MerchantCreatedAt time.Time
-	ItemID            string
-	ItemName          string
-	ItemCategory      string
-	ItemPrice         int
-	ItemQuantity      int
-	ItemImageURL      string
-	ItemCreatedAt     time.Time
 }

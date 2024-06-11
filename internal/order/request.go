@@ -65,7 +65,7 @@ func (p CreateOrderRequest) Validate() error {
 type SearchOrderPayload struct {
 	MerchantID       string `schema:"merchantId" binding:"omitempty"`
 	Name             string `schema:"name" binding:"omitempty"`
-	MerchantCategory string `schema:"merchantCategory " binding:"omitempty"`
+	MerchantCategory string `schema:"merchantCategory" binding:"omitempty"`
 	Limit            int    `schema:"limit" binding:"omitempty"`
 	Offset           int    `schema:"offset" binding:"omitempty"`
 }

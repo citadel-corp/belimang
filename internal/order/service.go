@@ -157,6 +157,9 @@ func (s *orderService) CreateOrder(ctx context.Context, req CreateOrderRequest, 
 
 // SearchOrders implements Service.
 func (s *orderService) SearchOrders(ctx context.Context, req SearchOrderPayload, userID string) ([]*SearchOrderResponse, error) {
+	if req.Limit == 0 {
+		req.Limit = 5
+	}
 	orderItemMerchants, err := s.repository.SearchOrderItemMerchants(ctx, req, userID)
 	if err != nil {
 		return nil, err
@@ -166,10 +169,12 @@ func (s *orderService) SearchOrders(ctx context.Context, req SearchOrderPayload,
 		actualMerchantIDs = append(actualMerchantIDs, orderItemMerchant.MerchantID)
 	}
 	// searchResults, err := s.repository.SearchOrder(ctx, req, userID)\
-	orderItemDetailsMap := make(map[string][]Item) // key: orderID-merchantID
+	orderItemDetailsMap := make(map[string]Items) // key: orderID-merchantID
 	for _, orderItemMerchant := range orderItemMerchants {
 		key := fmt.Sprintf("%s-%s", orderItemMerchant.OrderID, orderItemMerchant.MerchantID)
-		orderItemDetailsMap[key] = append(orderItemDetailsMap[key], orderItemMerchant.OrderItems)
+		for _, item := range orderItemMerchant.OrderItems {
+			orderItemDetailsMap[key] = append(orderItemDetailsMap[key], item)
+		}
 	}
 	items, err := s.merchantItemsRepository.ListByMerchantUIDAndName(ctx, actualMerchantIDs, req.Name)
 	if err != nil {
@@ -180,51 +185,47 @@ func (s *orderService) SearchOrders(ctx context.Context, req SearchOrderPayload,
 		itemsMap[item.UID] = item
 	}
 
-	orderItemMerchantsMap := make(map[string][]*SearchOrderResponse) // key: orderID
+	orderItemMerchantsMap := make(map[string][]SearchOrderDetailResponse) // key: orderID
 	res := make([]*SearchOrderResponse, 0)
 	for _, orderItemMerchant := range orderItemMerchants {
 		searchOrderDetailItemResponse := make([]SearchOrderDetailItemResponse, 0)
 		key := fmt.Sprintf("%s-%s", orderItemMerchant.OrderID, orderItemMerchant.MerchantID)
 		searchOrderDetailItems := orderItemDetailsMap[key]
 		for _, searchOrderDetailItem := range searchOrderDetailItems {
-			item := itemsMap[searchOrderDetailItem.ItemID]
-			searchOrderDetailItemResponse = append(searchOrderDetailItemResponse, SearchOrderDetailItemResponse{
-				MerchantItemResponse: merchantitems.MerchantItemResponse{
-					UID:             item.UID,
-					Name:            item.Name,
-					ProductCategory: item.Category,
-					Price:           item.Price,
-					ImageURL:        item.ImageURL,
-					CreatedAt:       item.CreatedAt.Nanosecond(),
-				},
-				Quantity: searchOrderDetailItem.Quantity,
-			})
-		}
-		orderItemMerchantsMap[orderItemMerchant.OrderID] = append(orderItemMerchantsMap[orderItemMerchant.OrderID], &SearchOrderResponse{
-			OrderID: orderItemMerchant.OrderID,
-			Orders: SearchOrderDetailResponse{
-				Merchant: merchants.MerchantsResponse{
-					UID:      orderItemMerchant.MerchantID,
-					Name:     orderItemMerchant.MerchantName,
-					Category: orderItemMerchant.MerchantCategory,
-					ImageURL: orderItemMerchant.MerchantImageURL,
-					Location: merchants.LocationResponse{
-						Lat: orderItemMerchant.MerchantLat,
-						Lng: orderItemMerchant.MerchantLong,
+			if item, ok := itemsMap[searchOrderDetailItem.ItemID]; ok {
+				searchOrderDetailItemResponse = append(searchOrderDetailItemResponse, SearchOrderDetailItemResponse{
+					MerchantItemResponse: merchantitems.MerchantItemResponse{
+						UID:             item.UID,
+						Name:            item.Name,
+						ProductCategory: item.Category,
+						Price:           item.Price,
+						ImageURL:        item.ImageURL,
+						CreatedAt:       item.CreatedAt.Nanosecond(),
 					},
-					CreatedAt: orderItemMerchant.MerchantCreatedAt,
+					Quantity: searchOrderDetailItem.Quantity,
+				})
+			}
+		}
+		orderItemMerchantsMap[orderItemMerchant.OrderID] = append(orderItemMerchantsMap[orderItemMerchant.OrderID], SearchOrderDetailResponse{
+			Merchant: merchants.MerchantsResponse{
+				UID:      orderItemMerchant.MerchantID,
+				Name:     orderItemMerchant.MerchantName,
+				Category: orderItemMerchant.MerchantCategory,
+				ImageURL: orderItemMerchant.MerchantImageURL,
+				Location: merchants.LocationResponse{
+					Lat: orderItemMerchant.MerchantLat,
+					Lng: orderItemMerchant.MerchantLong,
 				},
-				Items: searchOrderDetailItemResponse,
+				CreatedAt: orderItemMerchant.MerchantCreatedAt,
 			},
+			Items: searchOrderDetailItemResponse,
 		})
-		// if orderID, ok := orderItemMerchantsMap[orderItemMerchant.OrderID]; ok {
-
-		// } else {
-
-		// }
 	}
-	// for k, v := range orderItemMerchantsMap {
-	// 	res = append(res, v)
-	// }
+	for k, v := range orderItemMerchantsMap {
+		res = append(res, &SearchOrderResponse{
+			OrderID: k,
+			Orders:  v,
+		})
+	}
 	return res, nil
 }

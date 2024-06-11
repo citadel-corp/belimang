@@ -162,7 +162,7 @@ func (d *dbRepository) ListByMerchantUIDAndName(ctx context.Context, merchantUID
 	}
 
 	if name != "" {
-		q += fmt.Sprintf(" AND mi.name ILIKE %%%s%%);", name)
+		q += fmt.Sprintf(") AND mi.name ILIKE '%%%s%%';", name)
 	} else {
 		q += ");"
 	}
