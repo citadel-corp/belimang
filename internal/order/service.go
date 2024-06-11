@@ -84,8 +84,12 @@ func (s *orderService) CalculateEstimate(ctx context.Context, req CalculateOrder
 		return nil, ErrSomeItemNotFound
 	}
 	totalPrice := 0
+	itemPriceMap := make(map[string]int)
 	for _, item := range itemList {
-		totalPrice += item.Price * itemQuantityMap[item.UID]
+		itemPriceMap[item.UID] = item.Price
+	}
+	for _, item := range allItems {
+		totalPrice += itemPriceMap[item.ItemID] * item.Quantity
 	}
 	// calculate delivery time
 	deliveryTime, err := haversine.CalculateDeliveryTime(req.UserLocation.Lat, req.UserLocation.Long, startingMerchantID, merchantList)
