@@ -79,7 +79,7 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (m
 
 	q := `
 		SELECT COUNT(*) OVER() AS total_count, m.uid, m.name, m.merchant_category, m.image_url, m.location_lat, m.location_lng, m.created_at
-		FROM merchants m 
+		FROM merchants m
 	`
 
 	paramNo := 1
@@ -90,13 +90,13 @@ func (d *dbRepository) List(ctx context.Context, filter ListMerchantsPayload) (m
 		params = append(params, filter.MerchantUID)
 	}
 	if filter.Name != "" {
-		q += whereOrAnd(paramNo)
+		q += whereOrAnd(paramNo, 1)
 		q += fmt.Sprintf("LOWER(m.name) LIKE $%d ", paramNo)
 		paramNo += 1
 		params = append(params, "%"+strings.ToLower(filter.Name)+"%")
 	}
 	if filter.MerchantCategory != "" {
-		q += whereOrAnd(paramNo)
+		q += whereOrAnd(paramNo, 1)
 		q += fmt.Sprintf("m.merchant_category = $%d ", paramNo)
 		paramNo += 1
 		params = append(params, filter.MerchantCategory)
@@ -138,25 +138,26 @@ func (d *dbRepository) ListByDistance(ctx context.Context, filter ListMerchantsB
 
 	q := `
 		SELECT COUNT(*) OVER() AS total_count,
-		m.*, 
-		COALESCE(mi.uid, ''), 
-		COALESCE(mi.name, ''), 
-		COALESCE(mi.merchant_id, 0), 
-		mi.item_category, 
-		COALESCE(mi.price, 0), 
-		COALESCE(mi.image_url, ''), 
+		m.*,
+		COALESCE(mi.uid, ''),
+		COALESCE(mi.name, ''),
+		COALESCE(mi.merchant_id, 0),
+		mi.item_category,
+		COALESCE(mi.price, 0),
+		COALESCE(mi.image_url, ''),
 		mi.created_at
 		FROM (
 			SELECT earth_distance(
 				ll_to_earth(location_lat, location_lng),
 				ll_to_earth($1, $2)
-			) as distance, 
+			) as distance,
 			id, uid, name, merchant_category, image_url, location_lat, location_lng, created_at
 			FROM merchants
-			ORDER BY distance
+			ORDER BY distance ASC
 			OFFSET $3 LIMIT $4
 		) AS m
 		LEFT JOIN merchant_items mi ON m.id = mi.merchant_id
+
 	`
 
 	paramNo := 5
@@ -167,21 +168,18 @@ func (d *dbRepository) ListByDistance(ctx context.Context, filter ListMerchantsB
 	params = append(params, filter.Limit)
 
 	if filter.MerchantUID != "" {
-		q += fmt.Sprintf("WHERE m.uid = $%d ", paramNo)
+		q += whereOrAnd(paramNo, 5)
+		q += fmt.Sprintf("m.uid = $%d ", paramNo)
 		paramNo += 1
 		params = append(params, filter.MerchantUID)
 	}
 	if filter.Name != "" {
-		q += whereOrAnd(paramNo)
-		q += fmt.Sprintf("LOWER(m.name) LIKE $%d OR LOWER(mi.name) LIKE $%d", paramNo, paramNo+1)
-		paramNo += 2
-		params = append(params, "%"+strings.ToLower(filter.Name)+"%")
-		params = append(params, "%"+strings.ToLower(filter.Name)+"%")
+		q += whereOrAnd(paramNo, 5)
+		q += fmt.Sprintf("m.name ILIKE '%%%s%%' OR mi.name ILIKE '%%%s%%'", filter.Name, filter.Name)
 	}
 	if filter.MerchantCategory != "" {
-		q += whereOrAnd(paramNo)
+		q += whereOrAnd(paramNo, 5)
 		q += fmt.Sprintf("m.merchant_category = $%d ", paramNo)
-		paramNo += 1
 		params = append(params, filter.MerchantCategory)
 	}
 
@@ -204,14 +202,15 @@ func (d *dbRepository) ListByDistance(ctx context.Context, filter ListMerchantsB
 			return
 		}
 		merchantWithItem = append(merchantWithItem, MerchantsWithItem{
-			ID:       m.ID,
-			UID:      m.UID,
-			Name:     m.Name,
-			Category: m.Category,
-			ImageURL: m.ImageURL,
-			Lat:      m.Lat,
-			Lng:      m.Lng,
-			Item:     mi,
+			ID:        m.ID,
+			UID:       m.UID,
+			Name:      m.Name,
+			Category:  m.Category,
+			ImageURL:  m.ImageURL,
+			Lat:       m.Lat,
+			Lng:       m.Lng,
+			CreatedAt: m.CreatedAt,
+			Item:      mi,
 		})
 	}
 	return
@@ -239,8 +238,8 @@ func (d *dbRepository) GetByUID(ctx context.Context, uid string) (merchant *Merc
 	return
 }
 
-func whereOrAnd(paramNo int) string {
-	if paramNo == 1 {
+func whereOrAnd(paramNo int, targetParamNo int) string {
+	if paramNo == targetParamNo {
 		return "WHERE "
 	}
 	return "AND "

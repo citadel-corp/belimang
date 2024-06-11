@@ -78,9 +78,8 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.JSON(w, http.StatusOK, response.ResponseBody{
-		Message: "Merchants fetched successfully",
-		Data:    merchantsResp,
-		Meta:    pagination,
+		Data: merchantsResp,
+		Meta: pagination,
 	})
 }
 
@@ -116,8 +115,7 @@ func (h *Handler) ListByDistance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.JSON(w, http.StatusOK, response.ResponseBody{
-		Message: "Merchants fetched successfully",
-		Data:    merchantsResp,
-		Meta:    pagination,
+		Data: merchantsResp,
+		Meta: pagination,
 	})
 }

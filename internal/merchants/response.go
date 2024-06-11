@@ -20,7 +20,7 @@ type MerchantsResponse struct {
 	Category  string           `json:"merchantCategory"`
 	ImageURL  string           `json:"imageUrl"`
 	Location  LocationResponse `json:"location"`
-	CreatedAt time.Time        `json:"createdAt"`
+	CreatedAt int              `json:"createdAt"`
 }
 
 func CreateMerchantsResponse(merchants []Merchants) []MerchantsResponse {
@@ -32,7 +32,7 @@ func CreateMerchantsResponse(merchants []Merchants) []MerchantsResponse {
 			Category:  string(m.Category),
 			ImageURL:  m.ImageURL,
 			Location:  LocationResponse{Lat: m.Lat, Lng: m.Lng},
-			CreatedAt: m.CreatedAt,
+			CreatedAt: m.CreatedAt.Nanosecond(),
 		})
 	}
 
@@ -49,13 +49,8 @@ type MerchantItemResponse struct {
 }
 
 type MerchantWithItemsResponse struct {
-	UID       string                 `json:"merchantId"`
-	Name      string                 `json:"name"`
-	Category  string                 `json:"merchantCategory"`
-	ImageURL  string                 `json:"imageUrl"`
-	Location  LocationResponse       `json:"location"`
-	CreatedAt int                    `json:"createdAt"`
-	Items     []MerchantItemResponse `json:"items"`
+	Merchant MerchantsResponse      `json:"merchant"`
+	Items    []MerchantItemResponse `json:"items"`
 }
 
 func CreateMerchantsWithItemsResponse(merchants []MerchantsWithItem) []MerchantWithItemsResponse {
@@ -64,16 +59,18 @@ func CreateMerchantsWithItemsResponse(merchants []MerchantsWithItem) []MerchantW
 	for _, merchant := range merchants {
 		if _, exists := merchantMap[merchant.ID]; !exists {
 			merchantMap[merchant.ID] = &MerchantWithItemsResponse{
-				UID:      merchant.UID,
-				Name:     merchant.Name,
-				Category: string(merchant.Category),
-				ImageURL: merchant.ImageURL,
-				Location: LocationResponse{
-					Lat: merchant.Lat,
-					Lng: merchant.Lng,
+				Merchant: MerchantsResponse{
+					UID:      merchant.UID,
+					Name:     merchant.Name,
+					Category: string(merchant.Category),
+					ImageURL: merchant.ImageURL,
+					Location: LocationResponse{
+						Lat: merchant.Lat,
+						Lng: merchant.Lng,
+					},
+					CreatedAt: merchant.CreatedAt.Nanosecond(),
 				},
-				CreatedAt: merchant.CreatedAt.Nanosecond(),
-				Items:     []MerchantItemResponse{},
+				Items: []MerchantItemResponse{},
 			}
 		}
 

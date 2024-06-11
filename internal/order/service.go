@@ -216,7 +216,7 @@ func (s *orderService) SearchOrders(ctx context.Context, req SearchOrderPayload,
 					Lat: orderItemMerchant.MerchantLat,
 					Lng: orderItemMerchant.MerchantLong,
 				},
-				CreatedAt: orderItemMerchant.MerchantCreatedAt,
+				CreatedAt: orderItemMerchant.MerchantCreatedAt.Nanosecond(),
 			},
 			Items: searchOrderDetailItemResponse,
 		})
