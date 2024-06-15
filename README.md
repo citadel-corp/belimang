@@ -1,6 +1,6 @@
-# citadel-corp/go-project-template
+# citadel-corp/belimang
 
-I'm Commander Shepard, and This Is My Favorite 'Templates for [citadel corp][citadel-corp]'s go projects' on the Citadel
+I'm Commander Shepard, and This Is My Favorite 'Ride Hailing Service' on the Citadel
 
 🔍 Tested with - [this][test-url].
 
@@ -68,5 +68,5 @@ details
 [repository]: https://github.com/citadel-corp/belimang
 [mit-license]: https://github.com/citadel-corp/belimang?tab=MIT-1-ov-file
 [license-file]: https://github.com/citadel-corp/belimang/blob/main/LICENSE
-[test-url]: TBA.
+[test-url]: [TBA](https://github.com/nandanugg/BeliMangTestCasesPB2W4)
 [documentation-url]: TBA.
