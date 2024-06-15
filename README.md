@@ -68,5 +68,5 @@ details
 [repository]: https://github.com/citadel-corp/belimang
 [mit-license]: https://github.com/citadel-corp/belimang?tab=MIT-1-ov-file
 [license-file]: https://github.com/citadel-corp/belimang/blob/main/LICENSE
-[test-url]: [TBA](https://github.com/nandanugg/BeliMangTestCasesPB2W4)
+[test-url]: https://github.com/nandanugg/BeliMangTestCasesPB2W4
 [documentation-url]: TBA.
